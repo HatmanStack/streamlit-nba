@@ -16,7 +16,7 @@ player_add = st.text_input('Who\'s your first Pick?', '')
 
 playerA = 'Lebron James'
 playerB = 'Kevin Durant'
-players_selected = st.multiselect("Your Team:", list(player_names), [playerA, playerB])
+players_selected = st.multiselect("Your Team:", list(player_names))
 
 def create_df(players):
     df = pd.DataFrame()
