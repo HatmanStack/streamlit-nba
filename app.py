@@ -8,6 +8,7 @@ from nba_api.stats.static import players
 
 
 nba_players = players.get_players()
+player_names = {i['full_name'] for i in nba_players}
 
 st.header('Build Your Team')
 
@@ -15,7 +16,7 @@ player_add = st.text_input('Who\'s your first Pick?', '')
 
 playerA = 'Lebron James'
 playerB = 'Kevin Durant'
-players_selected = st.multiselect("Your Team:", list(nba_players), [playerA, playerB])
+players_selected = st.multiselect("Your Team:", list(player_names), [playerA, playerB])
 
 def create_df(players):
     df = pd.DataFrame()
