@@ -1,0 +1,4 @@
+snowflake-connector-python
+nba_api
+numpy
+pandas
