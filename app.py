@@ -44,6 +44,7 @@ if st.button('Add Player'):
 st.header('Opossing Team')
 
 players_away = np.random.choice(nba_players, 5)
+console.log(players_away)
 
 def get_random_away():
     players_away.append(np.random.choice(nba_players,1))
@@ -53,6 +54,7 @@ def get_player_names():
     for i in players_away:
         names.append(i['full_name'])
     return names
+
 names = get_player_names()
 if len(players_away) < 5:
     get_random_away()
