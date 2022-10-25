@@ -12,7 +12,7 @@ search_string = 'select full_name, first_name, last_name from NBA where full_nam
 
 
 def find_player():
-  my_cnx = snowflake.connector.connect(**streamlit.secrets["snowflake"])
+  my_cnx = snowflake.connector.connect(**st.secrets["snowflake"])
   data = get_player()
   my_cnx.close()
   return data
