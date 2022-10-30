@@ -3,6 +3,8 @@ import pandas as pd
 import snowflake.connector
 import numpy as np
 from tensorflow.keras.models import load_model
+import random
+import math
 
 def on_page_load():
     st.set_page_config(layout="wide")
@@ -36,33 +38,74 @@ if not st.session_state.home_team_df.shape[0] == 5:
     st.markdown("<h3 style='text-align: center; color: red;'>Your Team Doesn't Have 5</h3>", unsafe_allow_html=True)
     away_data = pd.DataFrame()
     teams_good = False
+    winner = ''
 else:
     away_data = find_away_team()
     
 def analyze_stats(home_stats, away_stats):
-    arr = []
+    home=[]
+    away=[]
     for j in range(len(home_stats)):
-        arr += home_stats[j]
+        home += home_stats[j]
     for j in range(len(away_stats)):
-        arr += away_stats[j]
-    return np.array(arr).reshape(1, -1)
+        away += away_stats[j]
+    return np.array(home).reshape(1,-1), np.array(away).reshape(1,-1), np.array(home + away).reshape(1, -1)
+
+def get_score_board(p_pred, w_score):
+    score = []
+    score.append(int((w_score/4) * math.log(abs(p_pred), 100)))
+    score.append(int(((w_score - score[0])/3) * math.log(abs(p_pred), 100)))
+    score.append(int(((w_score - score[0] - score[1])/2) * math.log(abs(p_pred), 100)))
+    score.append(w_score - (score[0] + score[1] + score[2]))
+    score.append(w_score)
+    return score
 
 if teams_good:
     #first pass algo to determine winner
     cols = ['PTS', 'OREB', 'DREB', 'AST', 'STL', 'BLK', 'TOV', 'FG3_PCT', 'FT_PCT', 'FGM']
     home_stats = st.session_state.home_team_df[cols].values.tolist()
     away_stats = away_data[cols].values.tolist()
-    X = analyze_stats(home_stats, away_stats)
-    model = load_model('my_model')
-    prediction = model.predict(X)
-    winner = 'You Won' if prediction > 80 else 'Computer Won'
+    home, away, winner = analyze_stats(home_stats, away_stats)
+    
+    winner_model = load_model('winner_model')
+    home_team_model = load_model('home_team_model')
+    away_team_model = load_model('away_team_model')
+
+    winner_prediction = winner_model.predict(winner)
+    home_point_prediction = home_team_model.predict(home)
+    away_point_prediction = away_team_model.predict(away)
+    
+    score = []
+    winner_score = random.randint(90, 130)
+    loser_score = random.randint(80, 120)
+    while winner_score < loser_score:
+        winner_score = random.randint(90, 130)
+        loser_score = random.randint(80, 120)
+
+    if winner_prediction > 100:
+        score.append(get_score_board(winner_prediction, winner_score))
+        score.append(get_score_board(away_point_prediction, loser_score))
+        winner = 'Winner'
+    else:
+        score.append(get_score_board(winner_prediction, loser_score))
+        score.append(get_score_board(away_point_prediction, winner_score))
+        winner = 'Loser'
+
+    box_score = pd.DataFrame(score , columns=['1', '2', '3', '4', 'Final'], index=['Home Team', 'Away Team'] )
+    
+    print(f"Prediction: {winner_prediction}")
+    print(f"Home Points: {home_point_prediction}")
+    print(f"Away Points: {away_point_prediction}")
 
 st.markdown("<h1 style='text-align: center; color: steelblue;'>Home Team</h1>", unsafe_allow_html=True)
 st.dataframe(st.session_state.home_team_df)
 if teams_good:
-    st.markdown(f"<h1 style='text-align: center; color: steelblue;'>{winner}</h1>", unsafe_allow_html=True)
-    
-st.markdown("<h1 style='text-align: center; color: steelblue;'>Opposing Team</h1>", unsafe_allow_html=True)
+    print(f"Teams Good")
+    st.markdown(f"<h3 style='text-align: center; color: steelblue;'>{winner}</h3>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    with col2:
+      st.dataframe(box_score)
+st.markdown("<h1 style='text-align: center; color: steelblue;'>Away Team</h1>", unsafe_allow_html=True)
 st.dataframe(away_data)
 
 if st.button("Play New Team"):
