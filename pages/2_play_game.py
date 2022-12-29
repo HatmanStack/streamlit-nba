@@ -82,6 +82,8 @@ if teams_good:
     while winner_score < loser_score:
         winner_score = random.randint(90, 130)
         loser_score = random.randint(80, 120)
+        print(f"Winner Score:  {winner_score}")
+        print(f"Loser Score:  {loser_score}")
 
     if winner_prediction > 100:
         score.append(get_score_board(winner_prediction, winner_score))
