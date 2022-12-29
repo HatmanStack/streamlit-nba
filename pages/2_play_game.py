@@ -54,9 +54,9 @@ def analyze_stats(home_stats, away_stats):
 def get_score_board(p_pred, w_score):
     score = []
     quarter_score = w_score/4
-    score.append(int(quarter_score + random.randint(-10, 10)))
-    score.append(int(quarter_score + random.randint(-10, 10)))
-    score.append(int(quarter_score + random.randint(-10, 10)))
+    score.append(int(quarter_score + random.randint(-7, 7)))
+    score.append(int(quarter_score + random.randint(-3, 3)))
+    score.append(int(quarter_score + random.randint(-8, 8)))
     score.append(w_score - (score[0] + score[1] + score[2]))
     score.append(w_score)
     return score
