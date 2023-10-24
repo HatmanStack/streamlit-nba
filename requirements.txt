@@ -1,4 +1,4 @@
-snowflake-connector-python
+snowflake-connector-python==2.8.3
 tensorflow
 numpy
 pandas

@@ -31,7 +31,7 @@ def find_away_team():
     cnx = snowflake.connector.connect(**st.secrets["snowflake"])
     data = get_away_team(cnx, query_string)
     cnx.close()
-    df = pd.DataFrame(data, columns=['FULL_NAME', 'AST', 'BLK', 'DREB', 'FG3A', 'FG3M', 'FG3_PCT', 'FGA', 'FGM', 'FG_PCT', 'FTA', 'FTM', 'FT_PCT','GP', 'GS', 'MIN', 'OREB', 'PF', 'PTS', 'REB', 'STL', 'TOV', 'FIRST_NAME', 'LAST_NAME', 'IS_ACTIVE'])
+    df = pd.DataFrame(data, columns=['FULL_NAME', 'AST', 'BLK', 'DREB', 'FG3A', 'FG3M', 'FG3_PCT', 'FGA', 'FGM', 'FG_PCT', 'FTA', 'FTM', 'FT_PCT','GP', 'GS', 'MIN', 'OREB', 'PF', 'PTS', 'REB', 'STL', 'TOV', 'FIRST_NAME', 'LAST_NAME', 'FULL_NAME_LOWER', 'FIRST_NAME_LOWER', 'LAST_NAME_LOWER', 'IS_ACTIVE'])
     return df   
 
 if not st.session_state.home_team_df.shape[0] == 5:
@@ -84,9 +84,10 @@ if teams_good:
         loser_score = random.randint(80, 120)
         
 
-    if winner_prediction > 100:
+    if winner_prediction < 200:
         score.append(get_score_board(winner_prediction, winner_score))
         score.append(get_score_board(away_point_prediction, loser_score))
+        print(winner_prediction)
         winner = 'Winner'
     else:
         score.append(get_score_board(winner_prediction, loser_score))

@@ -12,8 +12,9 @@ col1, col2, col3 = st.columns(3)
 with col2:
     st.markdown("<h1 style='text-align: center; color: steelblue;'>Build Your Team</h1>", unsafe_allow_html=True)
     player_add = st.text_input('Who\'re you picking?', 'James')
-
-search_string = 'select full_name, first_name, last_name from NBA where full_name=\'{}\' or first_name=\'{}\' or last_name=\'{}\';'.format(player_add, player_add, player_add)
+    player = player_add.lower()
+st.markdown("<p style='text-align: center; color: steelblue;'>Search for a player to populate the dropdown menu then pick and save your team before searching for another player.</p>", unsafe_allow_html=True)
+search_string = 'select full_name from NBA where full_name_lower=\'{}\' or first_name_lower=\'{}\' or last_name_lower=\'{}\';'.format(player, player, player)
 
 if 'home_team' not in st.session_state:
         st.session_state['home_team'] = []
@@ -48,7 +49,7 @@ def find_home_team():
             cur.execute('SELECT * FROM NBA WHERE FULL_NAME=\'{}\''.format(i))
             test.append(cur.fetchall()[0])
     cnx.close()    
-    df = pd.DataFrame(test, columns=['FULL_NAME', 'AST', 'BLK', 'DREB', 'FG3A', 'FG3M', 'FG3_PCT', 'FGA', 'FGM', 'FG_PCT', 'FTA', 'FTM', 'FT_PCT','GP', 'GS', 'MIN', 'OREB', 'PF', 'PTS', 'REB', 'STL', 'TOV', 'FIRST_NAME', 'LAST_NAME', 'IS_ACTIVE'])
+    df = pd.DataFrame(test, columns=['FULL_NAME', 'AST', 'BLK', 'DREB', 'FG3A', 'FG3M', 'FG3_PCT', 'FGA', 'FGM', 'FG_PCT', 'FTA', 'FTM', 'FT_PCT','GP', 'GS', 'MIN', 'OREB', 'PF', 'PTS', 'REB', 'STL', 'TOV', 'FIRST_NAME', 'LAST_NAME', 'FULL_NAME_LOWER', 'FIRST_NAME_LOWER', 'LAST_NAME_LOWER', 'IS_ACTIVE'])
     st.session_state.home_team_df = df
     return df
 
@@ -70,7 +71,7 @@ def save_state():
         for i in saved_players:
             if i not in player_selected:
                 st.session_state.home_team.remove(i)
-    st.experimental_rerun()
+    st.rerun()
 
 col1, col2 = st.columns([7,1])
 with col1:
@@ -91,27 +92,22 @@ with col3:
         label_visibility="collapsed", )
 
     if difficulty == 'Regular':
-        hard_string = 'Nancy'
         st.session_state.away_stats = [850, 400, 200, 60]
         st.session_state.radio_index = 0       
     elif difficulty == '93\' Bulls':
-        hard_string = 'True Fan'
         st.session_state.away_stats = [1050, 500, 300, 80]
         st.session_state.radio_index = 1
     elif difficulty == 'All-Stars':
-        hard_string = 'Getting Warmer'
         st.session_state.away_stats = [1250, 600, 400, 100]
         st.session_state.radio_index = 2
     elif difficulty == 'Dream Team':
-        hard_string = 'Stud'
         st.session_state.away_stats = [1450, 700, 500, 120]
         st.session_state.radio_index = 3
     else:
         st.write("You didn't select a difficulty.")
 
-    print(st.session_state.away_stats)
-    st.markdown("<h3 style='text-align: center; color: steelblue;'>{}</h3>".format(hard_string), unsafe_allow_html=True)
-
+    
+  
 
 
 
