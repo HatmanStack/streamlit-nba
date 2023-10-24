@@ -71,7 +71,7 @@ def save_state():
         for i in saved_players:
             if i not in player_selected:
                 st.session_state.home_team.remove(i)
-    st.rerun()
+    st.experimental_rerun()
 
 col1, col2 = st.columns([7,1])
 with col1:
