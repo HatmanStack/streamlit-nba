@@ -12,6 +12,9 @@ on_page_load()
 
 stats = st.session_state.away_stats    
 teams_good = True
+winner_prediction = 0
+away_point_prediction = 0
+home_point_prediction = 0
 
 query_string = ('SELECT * FROM (select * from NBA where PTS > {}) sample (2 rows) UNION '.format(stats[0]))
 query_string += ('SELECT * FROM (select * from NBA where REB > {}) sample (1 rows) UNION '.format(stats[1]))
@@ -87,7 +90,6 @@ if teams_good:
     if winner_prediction > 200:
         score.append(get_score_board(winner_prediction, winner_score))
         score.append(get_score_board(away_point_prediction, loser_score))
-        print(winner_prediction)
         winner = 'Winner'
     else:
         score.append(get_score_board(winner_prediction, loser_score))
