@@ -2,13 +2,10 @@ import streamlit as st
 import pandas as pd
 import snowflake.connector
 import numpy as np
-import os
 import tensorflow as tf
 import random
 from tensorflow.keras.models import load_model
-from dotenv import load_dotenv
 
-load_dotenv()
 
 def on_page_load():
     st.set_page_config(layout="wide")
