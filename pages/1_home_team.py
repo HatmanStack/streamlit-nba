@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import snowflake.connector
-import os
 
 def on_page_load():
     st.set_page_config(layout="wide")
@@ -43,7 +42,6 @@ player_search = find_player()
 def find_home_team():
     test =[]
     cnx = snowflake.connector.connect(**st.secrets["snowflake"])
-    print('find home team')
     for i in st.session_state.home_team:
         with cnx.cursor() as cur:
             cur.execute('SELECT * FROM NBA WHERE FULL_NAME=\'{}\''.format(i))
@@ -71,7 +69,7 @@ def save_state():
         for i in saved_players:
             if i not in player_selected:
                 st.session_state.home_team.remove(i)
-    st.experimental_rerun()
+    st.rerun()
 
 col1, col2 = st.columns([7,1])
 with col1:

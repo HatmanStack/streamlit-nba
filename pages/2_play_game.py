@@ -2,9 +2,13 @@ import streamlit as st
 import pandas as pd
 import snowflake.connector
 import numpy as np
-from tensorflow.keras.models import load_model
+import os
+import tensorflow as tf
 import random
-import math
+from tensorflow.keras.models import load_model
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def on_page_load():
     st.set_page_config(layout="wide")
@@ -32,6 +36,7 @@ def get_away_team(cnx, query_string):
               
 def find_away_team():
     cnx = snowflake.connector.connect(**st.secrets["snowflake"])
+
     data = get_away_team(cnx, query_string)
     cnx.close()
     df = pd.DataFrame(data, columns=['FULL_NAME', 'AST', 'BLK', 'DREB', 'FG3A', 'FG3M', 'FG3_PCT', 'FGA', 'FGM', 'FG_PCT', 'FTA', 'FTM', 'FT_PCT','GP', 'GS', 'MIN', 'OREB', 'PF', 'PTS', 'REB', 'STL', 'TOV', 'FIRST_NAME', 'LAST_NAME', 'FULL_NAME_LOWER', 'FIRST_NAME_LOWER', 'LAST_NAME_LOWER', 'IS_ACTIVE'])
@@ -71,14 +76,11 @@ if teams_good:
     away_stats = away_data[cols].values.tolist()
     home, away, winner = analyze_stats(home_stats, away_stats)
     
-    winner_model = load_model('winner_model')
-    home_team_model = load_model('home_team_model')
-    away_team_model = load_model('away_team_model')
+    winner_model = load_model('winner.keras')
 
-    winner_prediction = winner_model.predict(winner)
-    home_point_prediction = home_team_model.predict(home)
-    away_point_prediction = away_team_model.predict(away)
-    
+    winner_sigmoid= winner_model.predict(winner)
+    winner_prediction = np.round(winner_sigmoid)
+
     score = []
     winner_score = random.randint(90, 130)
     loser_score = random.randint(80, 120)
@@ -87,7 +89,7 @@ if teams_good:
         loser_score = random.randint(80, 120)
         
 
-    if winner_prediction > 200:
+    if winner_prediction == 1:
         score.append(get_score_board(winner_prediction, winner_score))
         score.append(get_score_board(away_point_prediction, loser_score))
         winner = 'Winner'
@@ -98,9 +100,7 @@ if teams_good:
 
     box_score = pd.DataFrame(score , columns=['1', '2', '3', '4', 'Final'], index=['Home Team', 'Away Team'] )
     
-    print(f"Prediction: {winner_prediction}")
-    print(f"Home Points: {home_point_prediction}")
-    print(f"Away Points: {away_point_prediction}")
+    print(f"Prediction: {winner_sigmoid}")
 
 st.markdown("<h1 style='text-align: center; color: steelblue;'>Home Team</h1>", unsafe_allow_html=True)
 st.dataframe(st.session_state.home_team_df)
