@@ -76,8 +76,7 @@ if teams_good:
     winner_model = load_model('winner.keras')
 
     winner_sigmoid= winner_model.predict(winner)
-    print(winner_sigmoid[0][0])
-    winner_prediction = np.round(winner_sigmoid)
+    winner_prediction = np.round(winner_sigmoid[0][0])
 
     score = []
     winner_score = random.randint(90, 130)
@@ -87,7 +86,7 @@ if teams_good:
         loser_score = random.randint(80, 120)
         
 
-    if winner_sigmoid[0][0] > .65:
+    if winner_prediction == 1:
         score.append(get_score_board(winner_prediction, winner_score))
         score.append(get_score_board(away_point_prediction, loser_score))
         winner = 'Winner'
@@ -97,8 +96,7 @@ if teams_good:
         winner = 'Loser'
 
     box_score = pd.DataFrame(score , columns=['1', '2', '3', '4', 'Final'], index=['Home Team', 'Away Team'] )
-    
-    print(f"Prediction: {winner_sigmoid}")
+    print(f"Prediction: {winner_sigmoid[0][0]}")
 
 st.markdown("<h1 style='text-align: center; color: steelblue;'>Home Team</h1>", unsafe_allow_html=True)
 st.dataframe(st.session_state.home_team_df)
