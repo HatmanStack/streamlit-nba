@@ -76,7 +76,7 @@ if teams_good:
     winner_model = load_model('winner.keras')
 
     winner_sigmoid= winner_model.predict(winner)
-    print(winner_sigmoid)
+    print(winner_sigmoid[0][0])
     winner_prediction = np.round(winner_sigmoid)
 
     score = []
@@ -87,7 +87,7 @@ if teams_good:
         loser_score = random.randint(80, 120)
         
 
-    if winner_sigmoid > .65:
+    if winner_sigmoid[0][0] > .65:
         score.append(get_score_board(winner_prediction, winner_score))
         score.append(get_score_board(away_point_prediction, loser_score))
         winner = 'Winner'
