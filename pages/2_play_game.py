@@ -1,114 +1,194 @@
-import streamlit as st
-import pandas as pd
-import snowflake.connector
-import numpy as np
-import tensorflow as tf
+"""Game play page with prediction and scoring."""
+
+import logging
 import random
-from tensorflow.keras.models import load_model
+
+import pandas as pd
+import streamlit as st
+
+from src.config import (
+    DEFAULT_LOSER_SCORE,
+    DEFAULT_WINNER_SCORE,
+    LOSER_SCORE_RANGE,
+    MAX_QUERY_ATTEMPTS,
+    STAT_COLUMNS,
+    TEAM_SIZE,
+    WINNER_SCORE_RANGE,
+)
+from src.database.connection import DatabaseConnectionError, QueryExecutionError, get_connection
+from src.database.queries import get_away_team_by_stats
+from src.ml.model import ModelLoadError, analyze_team_stats, predict_winner
+from src.state.session import get_away_stats, get_home_team_df, init_session_state
+from src.utils.html import safe_heading
+
+logger = logging.getLogger("streamlit_nba")
 
 
-def on_page_load():
+def on_page_load() -> None:
+    """Configure page settings."""
     st.set_page_config(layout="wide")
+
+
 on_page_load()
 
-stats = st.session_state.away_stats    
+# Initialize session state BEFORE any access
+init_session_state()
+
+# Get stats safely with fallback
+stats = get_away_stats()
 teams_good = True
-winner_prediction = 0
-away_point_prediction = 0
-home_point_prediction = 0
 
-query_string = ('SELECT * FROM (select * from NBA where PTS > {}) sample (2 rows) UNION '.format(stats[0]))
-query_string += ('SELECT * FROM (select * from NBA where REB > {}) sample (1 rows) UNION '.format(stats[1]))
-query_string += ('SELECT * FROM (select * from NBA where AST > {}) sample (1 rows) UNION '.format(stats[2]))
-query_string += ('SELECT * FROM (select * from NBA where STL > {}) sample (1 rows);'.format(stats[3]))
 
-def get_away_team(cnx, query_string):
-    with cnx.cursor() as cur:
-        cur.execute(query_string)
-        players = cur.fetchall()
-        while len(players) != 5:
-            cur.execute(query_string)   
-            players = cur.fetchall()
-    return players    
-              
-def find_away_team():
-    cnx = snowflake.connector.connect(**st.secrets["snowflake"])
+def find_away_team(stat_thresholds: list[int]) -> pd.DataFrame:
+    """Generate away team based on difficulty stats.
 
-    data = get_away_team(cnx, query_string)
-    cnx.close()
-    df = pd.DataFrame(data, columns=['FULL_NAME', 'AST', 'BLK', 'DREB', 'FG3A', 'FG3M', 'FG3_PCT', 'FGA', 'FGM', 'FG_PCT', 'FTA', 'FTM', 'FT_PCT','GP', 'GS', 'MIN', 'OREB', 'PF', 'PTS', 'REB', 'STL', 'TOV', 'FIRST_NAME', 'LAST_NAME', 'FULL_NAME_LOWER', 'FIRST_NAME_LOWER', 'LAST_NAME_LOWER', 'IS_ACTIVE'])
-    return df   
+    Args:
+        stat_thresholds: List of [pts, reb, ast, stl] thresholds
 
-if not st.session_state.home_team_df.shape[0] == 5:
-    st.markdown("<h3 style='text-align: center; color: red;'>Your Team Doesn't Have 5</h3>", unsafe_allow_html=True)
+    Returns:
+        DataFrame with away team data, or empty DataFrame on error
+    """
+    try:
+        with get_connection() as conn:
+            return get_away_team_by_stats(
+                conn,
+                pts_threshold=stat_thresholds[0],
+                reb_threshold=stat_thresholds[1],
+                ast_threshold=stat_thresholds[2],
+                stl_threshold=stat_thresholds[3],
+                max_attempts=MAX_QUERY_ATTEMPTS,
+            )
+    except DatabaseConnectionError as e:
+        st.error("Could not connect to database. Please try again later.")
+        logger.error(f"Database connection error: {e}")
+        return pd.DataFrame()
+    except QueryExecutionError as e:
+        st.error("Could not generate away team. Please try again.")
+        logger.error(f"Query error: {e}")
+        return pd.DataFrame()
+
+
+def get_score_board(final_score: int) -> list[int]:
+    """Generate quarter-by-quarter scores that sum to final score.
+
+    Args:
+        final_score: Total game score
+
+    Returns:
+        List of [Q1, Q2, Q3, Q4, Final] scores
+    """
+    quarter_score = final_score // 4
+    scores = [
+        quarter_score + random.randint(-7, 7),
+        quarter_score + random.randint(-3, 3),
+        quarter_score + random.randint(-8, 8),
+    ]
+    # Q4 makes up the difference to hit exact final
+    scores.append(final_score - sum(scores))
+    scores.append(final_score)
+    return scores
+
+
+def generate_game_scores() -> tuple[int, int]:
+    """Generate winner and loser scores with loop guard.
+
+    Returns:
+        Tuple of (winner_score, loser_score)
+    """
+    for _ in range(MAX_QUERY_ATTEMPTS):
+        winner_score = random.randint(*WINNER_SCORE_RANGE)
+        loser_score = random.randint(*LOSER_SCORE_RANGE)
+        if winner_score > loser_score:
+            return winner_score, loser_score
+
+    # Fallback to guaranteed valid scores
+    logger.warning("Score generation fell back to defaults")
+    return DEFAULT_WINNER_SCORE, DEFAULT_LOSER_SCORE
+
+
+# Check if home team is valid
+home_team_df = get_home_team_df()
+
+if home_team_df.empty or home_team_df.shape[0] != TEAM_SIZE:
+    safe_heading(
+        f"Your Team Doesn't Have {TEAM_SIZE} Players",
+        level=3,
+        color="red",
+    )
     away_data = pd.DataFrame()
     teams_good = False
-    winner = ''
+    winner_label = ""
+    box_score = pd.DataFrame()
 else:
-    away_data = find_away_team()
-    
-def analyze_stats(home_stats, away_stats):
-    home=[]
-    away=[]
-    for j in range(len(home_stats)):
-        home += home_stats[j]
-    for j in range(len(away_stats)):
-        away += away_stats[j]
-    return np.array(home).reshape(1,-1), np.array(away).reshape(1,-1), np.array(home + away).reshape(1, -1)
+    away_data = find_away_team(stats)
+    if away_data.empty:
+        teams_good = False
+        winner_label = ""
+        box_score = pd.DataFrame()
 
-def get_score_board(p_pred, w_score):
-    score = []
-    quarter_score = int(w_score/4)
-    score.append(quarter_score + random.randint(-7, 7))
-    score.append(quarter_score + random.randint(-3, 3))
-    score.append(quarter_score + random.randint(-8, 8))
-    score.append(w_score - (score[0] + score[1] + score[2]))
-    score.append(w_score)
-    return score
+# Run prediction if both teams are valid
+if teams_good and not away_data.empty:
+    try:
+        # Extract stats for ML model
+        home_stats = home_team_df[STAT_COLUMNS].values.tolist()
+        away_stats_data = away_data[STAT_COLUMNS].values.tolist()
 
-if teams_good:
-    #first pass algo to determine winner
-    cols = ['PTS', 'OREB', 'DREB', 'AST', 'STL', 'BLK', 'TOV', 'FG3_PCT', 'FT_PCT', 'FGM']
-    home_stats = st.session_state.home_team_df[cols].values.tolist()
-    away_stats = away_data[cols].values.tolist()
-    home, away, winner = analyze_stats(home_stats, away_stats)
-    
-    winner_model = load_model('winner.keras')
+        # Prepare data and predict
+        _, _, combined = analyze_team_stats(home_stats, away_stats_data)
+        probability, prediction = predict_winner(combined)
 
-    winner_sigmoid= winner_model.predict(winner)
-    winner_prediction = np.round(winner_sigmoid[0][0])
+        # Generate scores
+        winner_score, loser_score = generate_game_scores()
 
-    score = []
-    winner_score = random.randint(90, 130)
-    loser_score = random.randint(80, 120)
-    while winner_score <= loser_score:
-        winner_score = random.randint(90, 130)
-        loser_score = random.randint(80, 120)
-        
+        # Build scoreboard based on prediction
+        if prediction == 1:
+            score_data = [
+                get_score_board(winner_score),
+                get_score_board(loser_score),
+            ]
+            winner_label = "Winner"
+        else:
+            score_data = [
+                get_score_board(loser_score),
+                get_score_board(winner_score),
+            ]
+            winner_label = "Loser"
 
-    if winner_prediction == 1:
-        score.append(get_score_board(winner_prediction, winner_score))
-        score.append(get_score_board(away_point_prediction, loser_score))
-        winner = 'Winner'
-    else:
-        score.append(get_score_board(winner_prediction, loser_score))
-        score.append(get_score_board(away_point_prediction, winner_score))
-        winner = 'Loser'
+        box_score = pd.DataFrame(
+            score_data,
+            columns=["1", "2", "3", "4", "Final"],
+            index=["Home Team", "Away Team"],
+        )
 
-    box_score = pd.DataFrame(score , columns=['1', '2', '3', '4', 'Final'], index=['Home Team', 'Away Team'] )
-    print(f"Prediction: {winner_sigmoid[0][0]}")
+        logger.info(f"Prediction: {probability:.4f}")
 
-st.markdown("<h1 style='text-align: center; color: steelblue;'>Home Team</h1>", unsafe_allow_html=True)
-st.dataframe(st.session_state.home_team_df)
-if teams_good:
-    print(f"Teams Good")
-    st.markdown(f"<h3 style='text-align: center; color: steelblue;'>{winner}</h3>", unsafe_allow_html=True)
+    except ModelLoadError as e:
+        st.error("Could not load prediction model. Please contact support.")
+        logger.error(f"Model load error: {e}")
+        teams_good = False
+        winner_label = ""
+        box_score = pd.DataFrame()
+    except ValueError as e:
+        st.error("Error processing team stats. Please try again.")
+        logger.error(f"Stats processing error: {e}")
+        teams_good = False
+        winner_label = ""
+        box_score = pd.DataFrame()
+
+# Display results
+safe_heading("Home Team", level=1, color="steelblue")
+st.dataframe(home_team_df)
+
+if teams_good and winner_label:
+    logger.info("Teams Good")
+    safe_heading(winner_label, level=3, color="steelblue")
     col1, col2, col3 = st.columns(3)
     with col2:
-      st.dataframe(box_score)
-st.markdown("<h1 style='text-align: center; color: steelblue;'>Away Team</h1>", unsafe_allow_html=True)
+        st.dataframe(box_score)
+
+safe_heading("Away Team", level=1, color="steelblue")
 st.dataframe(away_data)
 
 if st.button("Play New Team"):
-    print("New Team")
-
+    logger.info("New Team requested")
+    st.rerun()

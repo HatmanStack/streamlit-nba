@@ -1,13 +1,23 @@
-import streamlit as st
-import pandas as pd
-import snowflake.connector
+"""NBA Team Builder Application - Entry Point."""
 
-def on_page_load():
+import streamlit as st
+
+from src.utils.html import safe_heading, safe_paragraph
+
+
+def on_page_load() -> None:
+    """Configure page settings."""
     st.set_page_config(layout="wide")
+
+
 on_page_load()
 
-st.markdown("<h1 style='text-align: center; color: steelblue;'>NBA</h1>", unsafe_allow_html=True)
+safe_heading("NBA", level=1, color="steelblue")
 
-st.markdown("<h5 style='text-align: center; color: white;'>A Simple app to test your skill in building a Team based on career stats to compete with a Computer</h5>", unsafe_allow_html=True)
+safe_paragraph(
+    "A Simple app to test your skill in building a Team based on "
+    "career stats to compete with a Computer",
+    color="white",
+)
 
 
