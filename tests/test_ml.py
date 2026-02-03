@@ -32,7 +32,7 @@ class TestAnalyzeTeamStats:
         home_stats = [[1.0, 2.0], [3.0, 4.0]]  # 2 players, 2 stats each
         away_stats = [[5.0, 6.0], [7.0, 8.0]]
 
-        home_array, away_array, combined = analyze_team_stats(
+        _home_array, _away_array, combined = analyze_team_stats(
             home_stats, away_stats
         )
 

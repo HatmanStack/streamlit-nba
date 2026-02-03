@@ -15,7 +15,11 @@ from src.config import (
     TEAM_SIZE,
     WINNER_SCORE_RANGE,
 )
-from src.database.connection import DatabaseConnectionError, QueryExecutionError, get_connection
+from src.database.connection import (
+    DatabaseConnectionError,
+    QueryExecutionError,
+    get_connection,
+)
 from src.database.queries import get_away_team_by_stats
 from src.ml.model import ModelLoadError, analyze_team_stats, predict_winner
 from src.state.session import get_away_stats, get_home_team_df, init_session_state

@@ -45,6 +45,9 @@ module = [
     "keras.*",
     "sklearn.*",
     "scikeras.*",
+    "pydantic.*",
+    "pydantic_core.*",
+    "numpy.*",
 ]
 ignore_missing_imports = true
 
@@ -72,10 +75,14 @@ select = [
 ignore = [
     "S101",   # assert used (ok in tests)
     "PLR0913", # too many arguments
+    "S608",   # SQL injection false positive (using parameterized queries)
+    "S110",   # try-except-pass ok for connection cleanup
+    "SIM105", # prefer explicit try-except over contextlib.suppress
+    "PLR2004", # magic numbers ok in game logic
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "ARG001", "PLR2004"]
+"tests/*" = ["S101", "ARG001", "ARG002", "PLR2004", "PLC0415"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

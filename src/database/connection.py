@@ -1,8 +1,9 @@
 """Database connection management with error handling."""
 
 import logging
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator
+from typing import Any
 
 import snowflake.connector
 import streamlit as st
@@ -81,8 +82,8 @@ def get_connection() -> Generator[SnowflakeConnection, None, None]:
 def execute_query(
     conn: SnowflakeConnection,
     query: str,
-    params: tuple | list | None = None,
-) -> list[tuple]:
+    params: tuple[Any, ...] | list[Any] | None = None,
+) -> list[tuple[Any, ...]]:
     """Execute a parameterized query safely.
 
     Args:

@@ -1,23 +1,23 @@
 """Database module for connection management and queries."""
 
 from src.database.connection import (
-    get_connection,
     DatabaseConnectionError,
     QueryExecutionError,
+    get_connection,
 )
 from src.database.queries import (
-    search_player_by_name,
+    get_away_team_by_stats,
     get_player_by_full_name,
     get_players_by_full_names,
-    get_away_team_by_stats,
+    search_player_by_name,
 )
 
 __all__ = [
-    "get_connection",
     "DatabaseConnectionError",
     "QueryExecutionError",
-    "search_player_by_name",
+    "get_away_team_by_stats",
+    "get_connection",
     "get_player_by_full_name",
     "get_players_by_full_names",
-    "get_away_team_by_stats",
+    "search_player_by_name",
 ]

@@ -6,7 +6,11 @@ import pandas as pd
 import streamlit as st
 
 from src.config import DIFFICULTY_PRESETS, PLAYER_COLUMNS
-from src.database.connection import DatabaseConnectionError, QueryExecutionError, get_connection
+from src.database.connection import (
+    DatabaseConnectionError,
+    QueryExecutionError,
+    get_connection,
+)
 from src.database.queries import get_players_by_full_names, search_player_by_name
 from src.state.session import init_session_state
 from src.utils.html import safe_heading, safe_paragraph
@@ -58,7 +62,7 @@ def find_player(search_term: str) -> list[str]:
             results = search_player_by_name(conn, validated_term)
             return [player[0] for player in results]
     except DatabaseConnectionError as e:
-        st.error(f"Could not connect to database. Please try again later.")
+        st.error("Could not connect to database. Please try again later.")
         logger.error(f"Database connection error: {e}")
         return []
     except QueryExecutionError as e:

@@ -2,6 +2,7 @@
 
 import logging
 from dataclasses import dataclass, field
+from typing import cast
 
 import pandas as pd
 import streamlit as st
@@ -62,7 +63,7 @@ def get_away_stats() -> list[int]:
         st.session_state["away_stats"] = default_stats
         return default_stats
 
-    return stats
+    return cast("list[int]", stats)
 
 
 def get_home_team_df() -> pd.DataFrame:
@@ -78,7 +79,7 @@ def get_home_team_df() -> pd.DataFrame:
         logger.warning("Invalid home_team_df in session, using empty DataFrame")
         return pd.DataFrame()
 
-    return df
+    return cast("pd.DataFrame", df)
 
 
 def get_home_team_names() -> list[str]:
@@ -93,7 +94,7 @@ def get_home_team_names() -> list[str]:
     if team is None or not isinstance(team, list):
         return []
 
-    return team
+    return cast("list[str]", team)
 
 
 def set_difficulty(preset_name: str) -> None:

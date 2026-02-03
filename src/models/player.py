@@ -1,6 +1,6 @@
 """Pydantic models for player and game data."""
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -40,7 +40,7 @@ class PlayerStats(BaseModel):
     is_active: bool = Field(default=False)
 
     @classmethod
-    def from_db_row(cls, row: tuple) -> "PlayerStats":
+    def from_db_row(cls, row: tuple[Any, ...]) -> "PlayerStats":
         """Create PlayerStats from a database row tuple.
 
         Args:

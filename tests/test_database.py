@@ -1,15 +1,14 @@
 """Tests for database module."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
 
-from src.config import MAX_QUERY_ATTEMPTS, PLAYER_COLUMNS
+from src.config import PLAYER_COLUMNS
 from src.database.connection import QueryExecutionError
 from src.database.queries import (
     get_away_team_by_stats,
-    get_player_by_full_name,
     get_players_by_full_names,
     search_player_by_name,
 )
