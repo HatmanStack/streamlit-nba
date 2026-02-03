@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, field_validator
 
 # Patterns that indicate SQL injection attempts
 SQL_INJECTION_PATTERNS: list[str] = [
-    r"['\";]",  # Quote characters and semicolons
+    r'[";]',  # Double quotes and semicolons (apostrophes allowed for names like O'Neal)
     r"--",  # SQL comment
     r"/\*",  # Block comment start
     r"\*/",  # Block comment end
@@ -19,6 +19,8 @@ SQL_INJECTION_PATTERNS: list[str] = [
     r"\bEXEC\b",  # EXEC keyword
     r"\bOR\s+\d+=\d+",  # OR 1=1 pattern
     r"\bAND\s+\d+=\d+",  # AND 1=1 pattern
+    r"'\s*OR\s",  # ' OR pattern (SQL injection)
+    r"'\s*AND\s",  # ' AND pattern (SQL injection)
 ]
 
 # Compiled regex for efficiency
