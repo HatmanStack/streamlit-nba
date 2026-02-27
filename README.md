@@ -2,7 +2,7 @@
 title: NBA Fantasy Predictor
 emoji: 🏀
 colorFrom: blue
-colorTo: white
+colorTo: red
 sdk: streamlit
 sdk_version: 1.28.0
 app_file: app.py
