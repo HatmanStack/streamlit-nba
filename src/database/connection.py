@@ -1,112 +1,71 @@
-"""Database connection management with error handling."""
+"""Local CSV data management with error handling."""
 
 import logging
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any
+from pathlib import Path
 
-import snowflake.connector
+import pandas as pd
 import streamlit as st
-from snowflake.connector import SnowflakeConnection
-from snowflake.connector.errors import DatabaseError, ProgrammingError
 
 logger = logging.getLogger("streamlit_nba")
 
+CSV_PATH = Path("snowflake_nba.csv")
+
 
 class DatabaseConnectionError(Exception):
-    """Raised when database connection fails."""
+    """Raised when local data file cannot be found or loaded."""
 
     pass
 
 
 class QueryExecutionError(Exception):
-    """Raised when query execution fails."""
+    """Raised when data query fails."""
 
     pass
 
 
-@st.cache_resource
-def _get_connection_pool() -> SnowflakeConnection:
-    """Create and cache a Snowflake connection.
+@st.cache_data
+def load_data() -> pd.DataFrame:
+    """Load and cache the local CSV data.
 
     Returns:
-        Cached Snowflake connection
+        DataFrame containing player data
 
     Raises:
-        DatabaseConnectionError: If connection cannot be established
+        DatabaseConnectionError: If file cannot be loaded
     """
+    if not CSV_PATH.exists():
+        logger.error(f"Data file not found: {CSV_PATH}")
+        raise DatabaseConnectionError(f"Data file not found: {CSV_PATH}")
+
     try:
-        return snowflake.connector.connect(**st.secrets["snowflake"])
-    except DatabaseError as e:
-        logger.error(f"Failed to connect to database: {e}")
-        raise DatabaseConnectionError(f"Could not connect to database: {e}") from e
-    except KeyError as e:
-        logger.error("Snowflake credentials not found in secrets")
-        raise DatabaseConnectionError(
-            "Database credentials not configured. Please check st.secrets."
-        ) from e
+        df = pd.read_csv(CSV_PATH)
+        # Ensure column names match expected Snowflake names (uppercase)
+        df.columns = [col.upper() for col in df.columns]
+        return df
+    except Exception as e:
+        logger.error(f"Failed to load CSV data: {e}")
+        raise DatabaseConnectionError(f"Could not load data from {CSV_PATH}: {e}") from e
 
 
 @contextmanager
-def get_connection() -> Generator[SnowflakeConnection, None, None]:
-    """Context manager for database connections with error handling.
+def get_connection() -> Generator[pd.DataFrame, None, None]:
+    """Context manager for local data access with error handling.
 
     Yields:
-        Active Snowflake connection
+        DataFrame with player data
 
     Raises:
-        DatabaseConnectionError: If connection fails
-
-    Example:
-        with get_connection() as conn:
-            # use connection
+        DatabaseConnectionError: If data cannot be loaded
     """
     try:
-        conn = snowflake.connector.connect(**st.secrets["snowflake"])
-        yield conn
-    except DatabaseError as e:
-        logger.error(f"Database connection error: {e}")
-        raise DatabaseConnectionError(f"Database connection failed: {e}") from e
-    except KeyError as e:
-        logger.error("Snowflake credentials not found in secrets")
-        raise DatabaseConnectionError(
-            "Database credentials not configured. Please check st.secrets."
-        ) from e
+        yield load_data()
+    except DatabaseConnectionError as e:
+        logger.error(f"Data access error: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error accessing data: {e}")
+        raise DatabaseConnectionError(f"Data access failed: {e}") from e
     finally:
-        try:
-            conn.close()
-        except Exception:
-            pass  # Connection may already be closed
-
-
-def execute_query(
-    conn: SnowflakeConnection,
-    query: str,
-    params: tuple[Any, ...] | list[Any] | None = None,
-) -> list[tuple[Any, ...]]:
-    """Execute a parameterized query safely.
-
-    Args:
-        conn: Active database connection
-        query: SQL query with %s placeholders
-        params: Query parameters (optional)
-
-    Returns:
-        List of result tuples
-
-    Raises:
-        QueryExecutionError: If query execution fails
-    """
-    try:
-        with conn.cursor() as cur:
-            if params:
-                cur.execute(query, params)
-            else:
-                cur.execute(query)
-            return cur.fetchall()
-    except ProgrammingError as e:
-        logger.error(f"Query execution error: {e}")
-        raise QueryExecutionError(f"Query failed: {e}") from e
-    except DatabaseError as e:
-        logger.error(f"Database error during query: {e}")
-        raise QueryExecutionError(f"Database error: {e}") from e
+        pass

@@ -1,24 +1,8 @@
 """Pytest fixtures for NBA Streamlit application tests."""
 
 from typing import Any
-from unittest.mock import MagicMock
-
 import pandas as pd
 import pytest
-
-
-@pytest.fixture
-def mock_snowflake_connection() -> MagicMock:
-    """Create a mock Snowflake connection.
-
-    Returns:
-        Mock connection object that simulates Snowflake connection behavior
-    """
-    mock_conn = MagicMock()
-    mock_cursor = MagicMock()
-    mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
-    mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
-    return mock_conn
 
 
 @pytest.fixture

@@ -1,6 +1,4 @@
-"""Tests for database module."""
-
-from unittest.mock import MagicMock
+"""Tests for database module using local pandas data."""
 
 import pandas as pd
 import pytest
@@ -17,130 +15,72 @@ from src.database.queries import (
 class TestSearchPlayerByName:
     """Tests for search_player_by_name function."""
 
-    def test_uses_parameterized_query(
-        self, mock_snowflake_connection: MagicMock
-    ) -> None:
-        """Verify parameterized queries are used (not string formatting)."""
-        mock_cursor = MagicMock()
-        mock_cursor.fetchall.return_value = [("LeBron James",)]
-        mock_snowflake_connection.cursor.return_value.__enter__.return_value = (
-            mock_cursor
-        )
+    def test_search_by_full_name(self, sample_player_df: pd.DataFrame) -> None:
+        """Verify search finds player by full name."""
+        result = search_player_by_name(sample_player_df, "LeBron James")
+        assert result == [("LeBron James",)]
 
-        search_player_by_name(mock_snowflake_connection, "james")
+    def test_search_by_first_name(self, sample_player_df: pd.DataFrame) -> None:
+        """Verify search finds player by first name."""
+        result = search_player_by_name(sample_player_df, "LeBron")
+        assert result == [("LeBron James",)]
 
-        # Verify execute was called with params tuple, not string formatting
-        mock_cursor.execute.assert_called_once()
-        call_args = mock_cursor.execute.call_args
-        query = call_args[0][0]
-        params = call_args[0][1]
+    def test_search_by_last_name(self, sample_player_df: pd.DataFrame) -> None:
+        """Verify search finds player by last name."""
+        result = search_player_by_name(sample_player_df, "Jordan")
+        assert result == [("Michael Jordan",)]
 
-        # Query should use %s placeholders
-        assert "%s" in query
-        # Should not contain the actual search term in the query string
-        assert "james" not in query.lower()
-        # Params should be a tuple with the search term
-        assert params == ("james", "james", "james")
+    def test_search_case_insensitive(self, sample_player_df: pd.DataFrame) -> None:
+        """Verify search is case-insensitive."""
+        result = search_player_by_name(sample_player_df, "lebron")
+        assert result == [("LeBron James",)]
 
-    def test_returns_list_of_tuples(
-        self, mock_snowflake_connection: MagicMock
-    ) -> None:
-        """Test that results are returned as list of tuples."""
-        mock_cursor = MagicMock()
-        mock_cursor.fetchall.return_value = [
-            ("LeBron James",),
-            ("James Harden",),
-        ]
-        mock_snowflake_connection.cursor.return_value.__enter__.return_value = (
-            mock_cursor
-        )
-
-        result = search_player_by_name(mock_snowflake_connection, "james")
-
-        assert result == [("LeBron James",), ("James Harden",)]
+    def test_returns_empty_on_no_match(self, sample_player_df: pd.DataFrame) -> None:
+        """Verify empty list returned when no player found."""
+        result = search_player_by_name(sample_player_df, "NonExistent Player")
+        assert result == []
 
 
 class TestGetPlayersByFullNames:
     """Tests for get_players_by_full_names batch query."""
 
-    def test_single_query_for_multiple_names(
-        self, mock_snowflake_connection: MagicMock, sample_player_data: list
-    ) -> None:
-        """Verify batch query uses single IN clause instead of N queries."""
-        mock_cursor = MagicMock()
-        mock_cursor.fetchall.return_value = sample_player_data
-        mock_snowflake_connection.cursor.return_value.__enter__.return_value = (
-            mock_cursor
-        )
-
+    def test_returns_correct_players(self, sample_player_df: pd.DataFrame) -> None:
+        """Verify correct players are returned in DataFrame."""
         names = ["LeBron James", "Michael Jordan"]
-        get_players_by_full_names(mock_snowflake_connection, names)
-
-        # Should only execute one query
-        assert mock_cursor.execute.call_count == 1
-
-        call_args = mock_cursor.execute.call_args
-        query = call_args[0][0]
-        params = call_args[0][1]
-
-        # Query should have IN clause with placeholders
-        assert "IN" in query.upper()
-        assert "%s" in query
-        # Params should be tuple of names
-        assert params == ("LeBron James", "Michael Jordan")
-
-    def test_returns_dataframe(
-        self, mock_snowflake_connection: MagicMock, sample_player_data: list
-    ) -> None:
-        """Test that results are returned as DataFrame."""
-        mock_cursor = MagicMock()
-        mock_cursor.fetchall.return_value = sample_player_data
-        mock_snowflake_connection.cursor.return_value.__enter__.return_value = (
-            mock_cursor
-        )
-
-        result = get_players_by_full_names(
-            mock_snowflake_connection, ["LeBron James", "Michael Jordan"]
-        )
+        result = get_players_by_full_names(sample_player_df, names)
 
         assert isinstance(result, pd.DataFrame)
-        assert list(result.columns) == PLAYER_COLUMNS
         assert len(result) == 2
+        assert set(result["FULL_NAME"]) == set(names)
+        assert list(result.columns) == PLAYER_COLUMNS
 
-    def test_empty_names_returns_empty_dataframe(
-        self, mock_snowflake_connection: MagicMock
-    ) -> None:
-        """Test that empty input returns empty DataFrame without query."""
-        mock_cursor = MagicMock()
-        mock_snowflake_connection.cursor.return_value.__enter__.return_value = (
-            mock_cursor
-        )
-
-        result = get_players_by_full_names(mock_snowflake_connection, [])
+    def test_empty_names_returns_empty_dataframe(self, sample_player_df: pd.DataFrame) -> None:
+        """Test that empty input returns empty DataFrame."""
+        result = get_players_by_full_names(sample_player_df, [])
 
         assert isinstance(result, pd.DataFrame)
         assert result.empty
-        # Should not execute any query
-        mock_cursor.execute.assert_not_called()
+        assert list(result.columns) == PLAYER_COLUMNS
 
 
 class TestGetAwayTeamByStats:
-    """Tests for get_away_team_by_stats with max_attempts guard."""
+    """Tests for get_away_team_by_stats."""
 
-    def test_max_attempts_raises_error(
-        self, mock_snowflake_connection: MagicMock
-    ) -> None:
-        """Test that max_attempts limit prevents infinite loop."""
-        mock_cursor = MagicMock()
-        # Always return wrong number of players
-        mock_cursor.fetchall.return_value = [("Player1",), ("Player2",)]
-        mock_snowflake_connection.cursor.return_value.__enter__.return_value = (
-            mock_cursor
-        )
+    def test_max_attempts_raises_error(self) -> None:
+        """Test that max_attempts limit works when population is too small."""
+        # Create a DF with only 2 players
+        df = pd.DataFrame([
+            {"FULL_NAME": "P1", "PTS": 1001, "REB": 501, "AST": 301, "STL": 101},
+            {"FULL_NAME": "P2", "PTS": 1001, "REB": 501, "AST": 301, "STL": 101},
+        ])
+        # Add missing columns to avoid errors if needed, though queries only use these
+        for col in PLAYER_COLUMNS:
+            if col not in df.columns:
+                df[col] = 0
 
         with pytest.raises(QueryExecutionError) as exc_info:
             get_away_team_by_stats(
-                mock_snowflake_connection,
+                df,
                 pts_threshold=1000,
                 reb_threshold=500,
                 ast_threshold=300,
@@ -149,28 +89,23 @@ class TestGetAwayTeamByStats:
             )
 
         assert "3 attempts" in str(exc_info.value)
-        assert mock_cursor.execute.call_count == 3
 
-    def test_success_on_first_try(
-        self, mock_snowflake_connection: MagicMock, sample_player_data: list
-    ) -> None:
-        """Test successful query on first attempt."""
-        mock_cursor = MagicMock()
-        # Return exactly 5 players
-        mock_cursor.fetchall.return_value = sample_player_data * 3  # 6 players
-        mock_cursor.fetchall.return_value = [
-            sample_player_data[0],
-            sample_player_data[1],
-            sample_player_data[0],
-            sample_player_data[1],
-            sample_player_data[0],
-        ]
-        mock_snowflake_connection.cursor.return_value.__enter__.return_value = (
-            mock_cursor
-        )
+    def test_success_with_enough_players(self) -> None:
+        """Test successful generation with sufficient population."""
+        # Create a DF with 10 players meeting criteria
+        data = []
+        for i in range(10):
+            data.append({
+                "FULL_NAME": f"Player{i}",
+                "PTS": 2000, "REB": 1000, "AST": 500, "STL": 200
+            })
+        df = pd.DataFrame(data)
+        for col in PLAYER_COLUMNS:
+            if col not in df.columns:
+                df[col] = 0
 
         result = get_away_team_by_stats(
-            mock_snowflake_connection,
+            df,
             pts_threshold=1000,
             reb_threshold=500,
             ast_threshold=300,
@@ -179,41 +114,3 @@ class TestGetAwayTeamByStats:
 
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 5
-        # Should only need one query
-        assert mock_cursor.execute.call_count == 1
-
-    def test_uses_parameterized_query(
-        self, mock_snowflake_connection: MagicMock, sample_player_data: list
-    ) -> None:
-        """Verify parameterized queries are used for stat thresholds."""
-        mock_cursor = MagicMock()
-        mock_cursor.fetchall.return_value = [
-            sample_player_data[0],
-            sample_player_data[1],
-            sample_player_data[0],
-            sample_player_data[1],
-            sample_player_data[0],
-        ]
-        mock_snowflake_connection.cursor.return_value.__enter__.return_value = (
-            mock_cursor
-        )
-
-        get_away_team_by_stats(
-            mock_snowflake_connection,
-            pts_threshold=1000,
-            reb_threshold=500,
-            ast_threshold=300,
-            stl_threshold=100,
-        )
-
-        call_args = mock_cursor.execute.call_args
-        query = call_args[0][0]
-        params = call_args[0][1]
-
-        # Query should use %s placeholders
-        assert "%s" in query
-        # Should not contain actual numbers in query
-        assert "1000" not in query
-        assert "500" not in query
-        # Params should be tuple of thresholds
-        assert params == (1000, 500, 300, 100)
