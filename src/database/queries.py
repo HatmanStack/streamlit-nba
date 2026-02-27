@@ -106,41 +106,41 @@ def get_away_team_by_stats(
             # 2. Pick 1 from REB (not in PTS)
             # 3. Pick 1 from AST (not in PTS or REB)
             # 4. Pick 1 from STL (not in PTS, REB, or AST)
-            
+
             selected_indices: set[int] = set()
-            
+
             # Step 1: PTS (2 players)
             if len(pool_pts) < 2:
                 raise ValueError("PTS pool too small")
             p12 = pool_pts.sample(n=2, replace=False)
             selected_indices.update(p12.index.tolist())
-            
+
             # Step 2: REB (1 player)
             remaining_reb = pool_reb[~pool_reb.index.isin(selected_indices)]
             if remaining_reb.empty:
                 raise ValueError("REB pool exhausted")
             p3 = remaining_reb.sample(n=1)
             selected_indices.update(p3.index.tolist())
-            
+
             # Step 3: AST (1 player)
             remaining_ast = pool_ast[~pool_ast.index.isin(selected_indices)]
             if remaining_ast.empty:
                 raise ValueError("AST pool exhausted")
             p4 = remaining_ast.sample(n=1)
             selected_indices.update(p4.index.tolist())
-            
+
             # Step 4: STL (1 player)
             remaining_stl = pool_stl[~pool_stl.index.isin(selected_indices)]
             if remaining_stl.empty:
                 raise ValueError("STL pool exhausted")
             p5 = remaining_stl.sample(n=1)
             selected_indices.update(p5.index.tolist())
-            
+
             results = df.loc[list(selected_indices)]
             if len(results) == 5:
                 logger.info(f"Got away team on attempt {attempt + 1}")
                 return results
-                
+
         except ValueError as e:
             logger.debug(f"Attempt {attempt + 1} failed: {e}")
             continue

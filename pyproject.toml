@@ -78,10 +78,13 @@ ignore = [
     "S110",   # try-except-pass ok for connection cleanup
     "SIM105", # prefer explicit try-except over contextlib.suppress
     "PLR2004", # magic numbers ok in game logic
+    "S311",   # standard pseudo-random generators ok for game logic
+    "E501",   # line length (handled by formatter or ignored)
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "ARG001", "ARG002", "PLR2004", "PLC0415"]
+"debug_streamlit.py" = ["E402"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
