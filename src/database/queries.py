@@ -1,64 +1,61 @@
-"""Parameterized database queries for player data."""
+"""Local data queries using pandas on loaded CSV data."""
 
 import logging
 from typing import Any
 
 import pandas as pd
-from snowflake.connector import SnowflakeConnection
 
 from src.config import MAX_QUERY_ATTEMPTS, PLAYER_COLUMNS
-from src.database.connection import QueryExecutionError, execute_query
+from src.database.connection import QueryExecutionError
 
 logger = logging.getLogger("streamlit_nba")
 
 
-def search_player_by_name(conn: SnowflakeConnection, name: str) -> list[tuple[str]]:
+def search_player_by_name(df: pd.DataFrame, name: str) -> list[tuple[str]]:
     """Search for players by name (first, last, or full name).
 
     Args:
-        conn: Active database connection
+        df: Player DataFrame
         name: Search term (case-insensitive)
 
     Returns:
         List of tuples containing matching full names
     """
     name_lower = name.lower().strip()
-    query = """
-        SELECT full_name FROM NBA
-        WHERE full_name_lower = %s
-           OR first_name_lower = %s
-           OR last_name_lower = %s
-    """
-    return execute_query(conn, query, (name_lower, name_lower, name_lower))
+    mask = (
+        (df["FULL_NAME_LOWER"] == name_lower)
+        | (df["FIRST_NAME_LOWER"] == name_lower)
+        | (df["LAST_NAME_LOWER"] == name_lower)
+    )
+    results = df[mask]["FULL_NAME"].unique().tolist()
+    return [(name,) for name in results]
 
 
 def get_player_by_full_name(
-    conn: SnowflakeConnection, full_name: str
+    df: pd.DataFrame, full_name: str
 ) -> tuple[Any, ...] | None:
     """Get a single player's full record by exact name match.
 
     Args:
-        conn: Active database connection
+        df: Player DataFrame
         full_name: Exact full name of player
 
     Returns:
         Player data tuple or None if not found
     """
-    query = "SELECT * FROM NBA WHERE FULL_NAME = %s"
-    results = execute_query(conn, query, (full_name,))
-    return results[0] if results else None
+    result = df[df["FULL_NAME"] == full_name]
+    if result.empty:
+        return None
+    return tuple(result.iloc[0].values)
 
 
 def get_players_by_full_names(
-    conn: SnowflakeConnection, names: list[str]
+    df: pd.DataFrame, names: list[str]
 ) -> pd.DataFrame:
     """Get multiple players' records in a single batch query.
 
-    This fixes the N+1 query problem by using a single IN clause
-    instead of multiple individual queries.
-
     Args:
-        conn: Active database connection
+        df: Player DataFrame
         names: List of exact full names
 
     Returns:
@@ -67,16 +64,11 @@ def get_players_by_full_names(
     if not names:
         return pd.DataFrame(columns=PLAYER_COLUMNS)
 
-    # Build parameterized IN clause
-    placeholders = ", ".join(["%s"] * len(names))
-    query = f"SELECT * FROM NBA WHERE FULL_NAME IN ({placeholders})"
-
-    results = execute_query(conn, query, tuple(names))
-    return pd.DataFrame(results, columns=PLAYER_COLUMNS)
+    return df[df["FULL_NAME"].isin(names)]
 
 
 def get_away_team_by_stats(
-    conn: SnowflakeConnection,
+    df: pd.DataFrame,
     pts_threshold: int,
     reb_threshold: int,
     ast_threshold: int,
@@ -85,11 +77,10 @@ def get_away_team_by_stats(
 ) -> pd.DataFrame:
     """Get a random away team based on stat thresholds.
 
-    Uses UNION with SAMPLE to get diverse players meeting stat criteria.
-    Includes a max_attempts guard to prevent infinite loops.
+    Replicates Snowflake's SAMPLE and UNION logic using pandas.
 
     Args:
-        conn: Active database connection
+        df: Player DataFrame
         pts_threshold: Minimum career points
         reb_threshold: Minimum career rebounds
         ast_threshold: Minimum career assists
@@ -102,26 +93,38 @@ def get_away_team_by_stats(
     Raises:
         QueryExecutionError: If unable to get 5 players within max_attempts
     """
-    query = """
-        SELECT * FROM (SELECT * FROM NBA WHERE PTS > %s) SAMPLE (2 ROWS)
-        UNION
-        SELECT * FROM (SELECT * FROM NBA WHERE REB > %s) SAMPLE (1 ROWS)
-        UNION
-        SELECT * FROM (SELECT * FROM NBA WHERE AST > %s) SAMPLE (1 ROWS)
-        UNION
-        SELECT * FROM (SELECT * FROM NBA WHERE STL > %s) SAMPLE (1 ROWS)
-    """
-    params = (pts_threshold, reb_threshold, ast_threshold, stl_threshold)
-
     for attempt in range(max_attempts):
-        results = execute_query(conn, query, params)
-        if len(results) == 5:
-            logger.info(f"Got away team on attempt {attempt + 1}")
-            return pd.DataFrame(results, columns=PLAYER_COLUMNS)
-        logger.debug(f"Attempt {attempt + 1}: got {len(results)} players, need 5")
+        try:
+            # Sample without replacement across all picks
+            df1 = df[df["PTS"] > pts_threshold].sample(n=2, replace=False)
 
-    # Fallback: if we can't get exactly 5, raise an error
+            # For subsequent picks, exclude already chosen players
+            chosen = df1
+
+            df2 = df[
+                (df["REB"] > reb_threshold) & (~df.index.isin(chosen.index))
+            ].sample(n=1, replace=False)
+            chosen = pd.concat([chosen, df2])
+
+            df3 = df[
+                (df["AST"] > ast_threshold) & (~df.index.isin(chosen.index))
+            ].sample(n=1, replace=False)
+            chosen = pd.concat([chosen, df3])
+
+            df4 = df[
+                (df["STL"] > stl_threshold) & (~df.index.isin(chosen.index))
+            ].sample(n=1, replace=False)
+            results = pd.concat([chosen, df4])
+
+            if len(results) == 5:
+                logger.info(f"Got away team on attempt {attempt + 1}")
+                return results
+        except ValueError:
+            # sample() can raise ValueError if n > population
+            logger.debug(f"Attempt {attempt + 1}: stat thresholds too restrictive")
+            continue
+
     raise QueryExecutionError(
         f"Could not generate away team with 5 players after {max_attempts} attempts. "
-        f"Last attempt returned {len(results)} players."
+        "Try lowering the difficulty."
     )
