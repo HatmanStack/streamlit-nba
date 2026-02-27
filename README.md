@@ -11,6 +11,9 @@
 
 A modern Streamlit application that allows you to build a custom NBA fantasy team and compete against computer-generated opponents. The application uses a neural network model to predict game outcomes based on historical player statistics.
 
+## 🔗 Live App
+Play the game [here](https://hatman-nba-fantasy-game.hf.space).
+
 ## 🚀 Features
 
 - **Multi-page Interface**: Organized navigation between the home page, team builder, and game simulator.
