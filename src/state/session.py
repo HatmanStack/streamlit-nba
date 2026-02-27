@@ -37,6 +37,7 @@ def init_session_state() -> None:
     defaults = {
         "home_team": [],
         "away_team": [],
+        "away_team_df": pd.DataFrame(),
         "away_stats": list(DIFFICULTY_PRESETS[DEFAULT_DIFFICULTY]),
         "home_team_df": pd.DataFrame(),
         "radio_index": 0,

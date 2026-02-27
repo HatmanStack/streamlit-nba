@@ -119,23 +119,27 @@ if home_team_df.empty or home_team_df.shape[0] != TEAM_SIZE:
         level=3,
         color="red",
     )
-    away_data = pd.DataFrame()
+    st.session_state.away_team_df = pd.DataFrame()
     teams_good = False
     winner_label = ""
     box_score = pd.DataFrame()
 else:
-    away_data = find_away_team(stats)
+    # Only generate away team if we don't have one or it's empty
+    if st.session_state.get("away_team_df") is None or st.session_state.away_team_df.empty:
+        st.session_state.away_team_df = find_away_team(stats)
+    
+    away_data = st.session_state.away_team_df
     if away_data.empty:
         teams_good = False
         winner_label = ""
         box_score = pd.DataFrame()
 
 # Run prediction if both teams are valid
-if teams_good and not away_data.empty:
+if teams_good and not st.session_state.away_team_df.empty:
     try:
         # Extract stats for ML model
         home_stats = home_team_df[STAT_COLUMNS].values.tolist()
-        away_stats_data = away_data[STAT_COLUMNS].values.tolist()
+        away_stats_data = st.session_state.away_team_df[STAT_COLUMNS].values.tolist()
 
         # Prepare data and predict
         _, _, combined = analyze_team_stats(home_stats, away_stats_data)
@@ -191,8 +195,11 @@ if teams_good and winner_label:
         st.dataframe(box_score)
 
 safe_heading("Away Team", level=1, color="steelblue")
-st.dataframe(away_data)
+st.dataframe(st.session_state.away_team_df)
 
-if st.button("Play New Team"):
+def play_new_team() -> None:
+    """Clear cached away team and rerun."""
     logger.info("New Team requested")
-    st.rerun()
+    st.session_state.away_team_df = pd.DataFrame()
+
+st.button("Play New Team", on_click=play_new_team)

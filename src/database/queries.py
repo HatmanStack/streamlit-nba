@@ -77,7 +77,7 @@ def get_away_team_by_stats(
 ) -> pd.DataFrame:
     """Get a random away team based on stat thresholds.
 
-    Replicates Snowflake's SAMPLE and UNION logic using pandas.
+    Ensures 5 unique players are selected who meet various stat criteria.
 
     Args:
         df: Player DataFrame
@@ -93,35 +93,56 @@ def get_away_team_by_stats(
     Raises:
         QueryExecutionError: If unable to get 5 players within max_attempts
     """
+    # Pre-filter pools to improve performance and reliability
+    pool_pts = df[df["PTS"] > pts_threshold]
+    pool_reb = df[df["REB"] > reb_threshold]
+    pool_ast = df[df["AST"] > ast_threshold]
+    pool_stl = df[df["STL"] > stl_threshold]
+
     for attempt in range(max_attempts):
         try:
-            # Sample without replacement across all picks
-            df1 = df[df["PTS"] > pts_threshold].sample(n=2, replace=False)
-
-            # For subsequent picks, exclude already chosen players
-            chosen = df1
-
-            df2 = df[
-                (df["REB"] > reb_threshold) & (~df.index.isin(chosen.index))
-            ].sample(n=1, replace=False)
-            chosen = pd.concat([chosen, df2])
-
-            df3 = df[
-                (df["AST"] > ast_threshold) & (~df.index.isin(chosen.index))
-            ].sample(n=1, replace=False)
-            chosen = pd.concat([chosen, df3])
-
-            df4 = df[
-                (df["STL"] > stl_threshold) & (~df.index.isin(chosen.index))
-            ].sample(n=1, replace=False)
-            results = pd.concat([chosen, df4])
-
+            # We need 5 unique players. Strategy:
+            # 1. Pick 2 from PTS
+            # 2. Pick 1 from REB (not in PTS)
+            # 3. Pick 1 from AST (not in PTS or REB)
+            # 4. Pick 1 from STL (not in PTS, REB, or AST)
+            
+            selected_indices: set[int] = set()
+            
+            # Step 1: PTS (2 players)
+            if len(pool_pts) < 2:
+                raise ValueError("PTS pool too small")
+            p12 = pool_pts.sample(n=2, replace=False)
+            selected_indices.update(p12.index.tolist())
+            
+            # Step 2: REB (1 player)
+            remaining_reb = pool_reb[~pool_reb.index.isin(selected_indices)]
+            if remaining_reb.empty:
+                raise ValueError("REB pool exhausted")
+            p3 = remaining_reb.sample(n=1)
+            selected_indices.update(p3.index.tolist())
+            
+            # Step 3: AST (1 player)
+            remaining_ast = pool_ast[~pool_ast.index.isin(selected_indices)]
+            if remaining_ast.empty:
+                raise ValueError("AST pool exhausted")
+            p4 = remaining_ast.sample(n=1)
+            selected_indices.update(p4.index.tolist())
+            
+            # Step 4: STL (1 player)
+            remaining_stl = pool_stl[~pool_stl.index.isin(selected_indices)]
+            if remaining_stl.empty:
+                raise ValueError("STL pool exhausted")
+            p5 = remaining_stl.sample(n=1)
+            selected_indices.update(p5.index.tolist())
+            
+            results = df.loc[list(selected_indices)]
             if len(results) == 5:
                 logger.info(f"Got away team on attempt {attempt + 1}")
                 return results
-        except ValueError:
-            # sample() can raise ValueError if n > population
-            logger.debug(f"Attempt {attempt + 1}: stat thresholds too restrictive")
+                
+        except ValueError as e:
+            logger.debug(f"Attempt {attempt + 1} failed: {e}")
             continue
 
     raise QueryExecutionError(
