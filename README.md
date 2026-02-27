@@ -1,4 +1,16 @@
-﻿# NBA Fantasy App
+﻿---
+title: NBA Fantasy Game
+emoji: 🏀
+colorFrom: blue
+colorTo: indigo
+sdk: streamlit
+sdk_version: 1.28.0
+app_file: app.py
+pinned: false
+license: mit
+---
+
+# NBA Fantasy App
 
 This repository has a Streamlit app that lets you create an NBA fantasy team and compete against computer-generated teams. The app uses a local CSV file that contains historical NBA player data.
 

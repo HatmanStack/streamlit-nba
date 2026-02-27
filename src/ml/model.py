@@ -9,8 +9,8 @@ from tensorflow.keras.models import Model, load_model
 
 logger = logging.getLogger("streamlit_nba")
 
-# Default model path
-DEFAULT_MODEL_PATH = Path("winner.keras")
+# Default model path relative to the project root
+DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent.parent / "winner.keras"
 
 
 class ModelLoadError(Exception):
