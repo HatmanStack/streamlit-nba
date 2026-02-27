@@ -1,17 +1,13 @@
----
-title: NBA Fantasy Game
-emoji: 🏀
-colorFrom: blue
-colorTo: indigo
-sdk: streamlit
-sdk_version: 1.28.0
-python_version: 3.11
-app_file: app.py
-pinned: false
-license: mit
----
-
 # NBA Fantasy Predictor
+
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat&logo=Streamlit&logoColor=white)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-%23FF6F00.svg?style=flat&logo=TensorFlow&logoColor=white)
+![Keras](https://img.shields.io/badge/Keras-%23D00000.svg?style=flat&logo=Keras&logoColor=white)
+![Pandas](https://img.shields.io/badge/pandas-%23150458.svg?style=flat&logo=pandas&logoColor=white)
+![NumPy](https://img.shields.io/badge/numpy-%23013243.svg?style=flat&logo=numpy&logoColor=white)
+![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)
+![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
 
 A modern Streamlit application that allows you to build a custom NBA fantasy team and compete against computer-generated opponents. The application uses a neural network model to predict game outcomes based on historical player statistics.
 
@@ -32,14 +28,6 @@ A modern Streamlit application that allows you to build a custom NBA fantasy tea
     - Utilizes automated hyperparameter tuning via `RandomizedSearchCV`.
 - **Game Simulation**: Generates dynamic quarter-by-quarter box scores based on model predictions.
 - **Clean Architecture**: Modular codebase with clear separation of concerns (ML, database, validation, and state management).
-
-## 🛠️ Tech Stack
-
-- **Frontend**: [Streamlit](https://streamlit.io/)
-- **Machine Learning**: [TensorFlow](https://www.tensorflow.org/) & [Keras](https://keras.io/)
-- **Data Processing**: [Pandas](https://pandas.pydata.org/) & [NumPy](https://numpy.org/)
-- **Data Storage**: Local CSV-based storage (`snowflake_nba.csv`)
-- **Development Tools**: [uv](https://github.com/astral-sh/uv), [Pytest](https://pytest.org/), [Ruff](https://github.com/astral-sh/ruff), [Mypy](http://mypy-lang.org/)
 
 ## 📋 Project Structure
 
@@ -106,4 +94,4 @@ This script performs an automated search for the best architecture and hyperpara
 
 ## 📄 License
 
-This repository is licensed under the MIT License.
+This repository is licensed under the Apache License 2.0.
