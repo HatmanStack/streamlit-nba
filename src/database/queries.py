@@ -23,12 +23,12 @@ def search_player_by_name(df: pd.DataFrame, name: str) -> list[tuple[str]]:
     """
     name_lower = name.lower().strip()
     mask = (
-        (df["FULL_NAME_LOWER"] == name_lower)
-        | (df["FIRST_NAME_LOWER"] == name_lower)
-        | (df["LAST_NAME_LOWER"] == name_lower)
+        df["FULL_NAME_LOWER"].str.contains(name_lower, case=False, na=False)
+        | df["FIRST_NAME_LOWER"].str.contains(name_lower, case=False, na=False)
+        | df["LAST_NAME_LOWER"].str.contains(name_lower, case=False, na=False)
     )
     results = df[mask]["FULL_NAME"].unique().tolist()
-    return [(name,) for name in results]
+    return [(player_name,) for player_name in results]
 
 
 def get_player_by_full_name(

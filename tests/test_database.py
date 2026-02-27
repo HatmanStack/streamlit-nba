@@ -35,6 +35,11 @@ class TestSearchPlayerByName:
         result = search_player_by_name(sample_player_df, "lebron")
         assert result == [("LeBron James",)]
 
+    def test_search_partial_name(self, sample_player_df: pd.DataFrame) -> None:
+        """Verify search finds player by partial name."""
+        result = search_player_by_name(sample_player_df, "Jord")
+        assert result == [("Michael Jordan",)]
+
     def test_returns_empty_on_no_match(self, sample_player_df: pd.DataFrame) -> None:
         """Verify empty list returned when no player found."""
         result = search_player_by_name(sample_player_df, "NonExistent Player")

@@ -127,7 +127,7 @@ else:
     # Only generate away team if we don't have one or it's empty
     if st.session_state.get("away_team_df") is None or st.session_state.away_team_df.empty:
         st.session_state.away_team_df = find_away_team(stats)
-    
+
     away_data = st.session_state.away_team_df
     if away_data.empty:
         teams_good = False

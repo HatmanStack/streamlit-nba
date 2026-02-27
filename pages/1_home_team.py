@@ -103,16 +103,24 @@ def find_home_team() -> pd.DataFrame:
 player_search = find_player(player_add)
 home_team_df = find_home_team()
 
-# Combine search results with current team
-if not home_team_df.empty:
-    name_list = home_team_df["FULL_NAME"].tolist()
-    player_search = player_search + [n for n in name_list if n not in player_search]
+# Combine search results with current team and current unsaved selections
+# This ensures that selections don't disappear when the search term changes
+current_team_names = home_team_df["FULL_NAME"].tolist() if not home_team_df.empty else []
+current_selections = st.session_state.get("player_selector", [])
+
+# Merge all into options list, maintaining uniqueness
+combined_options = list(player_search)
+for name in current_team_names + current_selections:
+    if name not in combined_options:
+        combined_options.append(name)
+
+player_search = combined_options
 
 
 def save_state() -> None:
     """Save the selected players to session state."""
     st.session_state.home_team = st.session_state.player_selector
-    # No need for st.rerun() inside a callback usually, 
+    # No need for st.rerun() inside a callback usually,
     # but it doesn't hurt. Streamlit reruns after callback.
 
 
