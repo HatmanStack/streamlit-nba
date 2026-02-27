@@ -1,16 +1,3 @@
----
-title: NBA Fantasy Game
-emoji: 🏀
-colorFrom: blue
-colorTo: indigo
-sdk: streamlit
-sdk_version: 1.28.0
-python_version: 3.11
-app_file: app.py
-pinned: false
-license: apache-2.0
----
-
 # NBA Fantasy Predictor
 
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
