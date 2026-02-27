@@ -1,6 +1,7 @@
 """Pytest fixtures for NBA Streamlit application tests."""
 
 from typing import Any
+
 import pandas as pd
 import pytest
 
