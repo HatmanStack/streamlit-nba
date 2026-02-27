@@ -10,7 +10,8 @@ import streamlit as st
 
 logger = logging.getLogger("streamlit_nba")
 
-CSV_PATH = Path("snowflake_nba.csv")
+# Resolve path relative to this module
+CSV_PATH = Path(__file__).resolve().parent.parent.parent / "snowflake_nba.csv"
 
 
 class DatabaseConnectionError(Exception):
@@ -46,7 +47,8 @@ def load_data() -> pd.DataFrame:
         return df
     except Exception as e:
         logger.error(f"Failed to load CSV data: {e}")
-        raise DatabaseConnectionError(f"Could not load data from {CSV_PATH}: {e}") from e
+        msg = f"Could not load data from {CSV_PATH}: {e}"
+        raise DatabaseConnectionError(msg) from e
 
 
 @contextmanager

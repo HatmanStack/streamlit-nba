@@ -54,7 +54,9 @@ class TestGetPlayersByFullNames:
         assert set(result["FULL_NAME"]) == set(names)
         assert list(result.columns) == PLAYER_COLUMNS
 
-    def test_empty_names_returns_empty_dataframe(self, sample_player_df: pd.DataFrame) -> None:
+    def test_empty_names_returns_empty_dataframe(
+        self, sample_player_df: pd.DataFrame
+    ) -> None:
         """Test that empty input returns empty DataFrame."""
         result = get_players_by_full_names(sample_player_df, [])
 

@@ -91,16 +91,30 @@ def get_away_team_by_stats(
         DataFrame with 5 players
 
     Raises:
-        RuntimeError: If unable to get 5 players within max_attempts
+        QueryExecutionError: If unable to get 5 players within max_attempts
     """
     for attempt in range(max_attempts):
         try:
-            df1 = df[df["PTS"] > pts_threshold].sample(n=2)
-            df2 = df[df["REB"] > reb_threshold].sample(n=1)
-            df3 = df[df["AST"] > ast_threshold].sample(n=1)
-            df4 = df[df["STL"] > stl_threshold].sample(n=1)
+            # Sample without replacement across all picks
+            df1 = df[df["PTS"] > pts_threshold].sample(n=2, replace=False)
 
-            results = pd.concat([df1, df2, df3, df4]).drop_duplicates()
+            # For subsequent picks, exclude already chosen players
+            chosen = df1
+
+            df2 = df[
+                (df["REB"] > reb_threshold) & (~df.index.isin(chosen.index))
+            ].sample(n=1, replace=False)
+            chosen = pd.concat([chosen, df2])
+
+            df3 = df[
+                (df["AST"] > ast_threshold) & (~df.index.isin(chosen.index))
+            ].sample(n=1, replace=False)
+            chosen = pd.concat([chosen, df3])
+
+            df4 = df[
+                (df["STL"] > stl_threshold) & (~df.index.isin(chosen.index))
+            ].sample(n=1, replace=False)
+            results = pd.concat([chosen, df4])
 
             if len(results) == 5:
                 logger.info(f"Got away team on attempt {attempt + 1}")
