@@ -84,7 +84,9 @@ def find_home_team() -> pd.DataFrame:
     try:
         with get_connection() as conn:
             # Single batch query instead of N+1 queries
+            logger.info(f"Loading data for team: {team_names}")
             df = get_players_by_full_names(conn, team_names)
+            logger.info(f"Retrieved {len(df)} players")
             st.session_state.home_team_df = df
             return df
     except DatabaseConnectionError as e:
@@ -109,18 +111,9 @@ if not home_team_df.empty:
 
 def save_state() -> None:
     """Save the selected players to session state."""
-    saved_players = home_team_df["FULL_NAME"].tolist() if not home_team_df.empty else []
-    holder = saved_players + player_selected
-
-    if len(player_selected) > len(saved_players):
-        for player in holder:
-            if player not in st.session_state.home_team:
-                st.session_state.home_team.append(player)
-    elif len(player_selected) < len(saved_players):
-        for player in saved_players:
-            if player not in player_selected:
-                st.session_state.home_team.remove(player)
-    st.rerun()
+    st.session_state.home_team = st.session_state.player_selector
+    # No need for st.rerun() inside a callback usually, 
+    # but it doesn't hurt. Streamlit reruns after callback.
 
 
 col1, col2 = st.columns([7, 1])
@@ -131,10 +124,10 @@ with col1:
         player_search,
         default_selection,
         label_visibility="collapsed",
+        key="player_selector",
     )
 with col2:
-    if st.button("Save Team"):
-        save_state()
+    st.button("Save Team", on_click=save_state)
 
 safe_heading("Preview", level=1, color="steelblue")
 
