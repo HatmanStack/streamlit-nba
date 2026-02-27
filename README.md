@@ -7,7 +7,7 @@ To determine the winner of each game, the app uses a functional Keras model that
 The app doesn't consider changes in playstyle or the three-point line when choosing from historical players.
 
 ## Game
-Play the game [here](https://hatmanstack-streamlit-nba-app-dz3nxx.streamlit.app/).
+Play the game [here](https://hatman-nba-fantasy-game.hf.space).
 
 ## Usage
 To use this app, launch the Streamlit App using the following command install streamlit and then run it:
@@ -20,3 +20,4 @@ streamlit run app.py
 ## License
 
 This repository is licensed under the MIT License.
+
