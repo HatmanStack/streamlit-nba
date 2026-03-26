@@ -16,9 +16,9 @@ Play the game [here](https://hatman-nba-fantasy-game.hf.space).
 
 ## 🚀 Features
 
-- **Multi-page Interface**: Organized navigation between the home page, team builder, and game simulator.
+- **Two-Page Interface**: Streamlit app with a team builder and game prediction simulator, plus a landing page.
 - **Advanced Team Builder**:
-    - Search for players from a comprehensive database of historical NBA stats.
+    - Search for players from a dataset of historical NBA stats (local CSV).
     - Input validation for secure and accurate player searches.
     - Build a 5-player roster with real-time preview.
 - **Dynamic Opponents**: Choose from multiple difficulty levels to generate challenging computer teams.
@@ -35,18 +35,24 @@ Play the game [here](https://hatman-nba-fantasy-game.hf.space).
 ## 📋 Project Structure
 
 ```text
-├── app.py              # Main entry point
-├── pages/              # Streamlit page modules
-├── src/                # Core application logic
-│   ├── database/       # Data access and queries
-│   ├── ml/             # Model loading and prediction
-│   ├── models/         # Data models and schemas
-│   ├── state/          # Session state management
-│   ├── utils/          # UI and helper utilities
-│   └── validation/     # Input validation logic
-├── tests/              # Comprehensive test suite
-├── scripts/            # Training and utility scripts
-└── winner.keras        # Pre-trained prediction model
+├── app.py                    # Main entry point
+├── pages/                    # Streamlit page modules
+├── src/                      # Core application logic
+│   ├── config.py             # Constants, presets, logging setup
+│   ├── database/             # CSV data loading and queries
+│   ├── ml/                   # Model loading and prediction
+│   ├── models/               # Data models and schemas
+│   ├── state/                # Session state management
+│   ├── utils/                # UI and helper utilities
+│   └── validation/           # Input validation logic
+├── tests/                    # Test suite
+├── scripts/                  # Training and utility scripts
+├── snowflake_nba.csv         # Player stats dataset (runtime data source)
+├── winner.keras              # Pre-trained prediction model
+├── .github/workflows/        # CI and release workflows
+├── .pre-commit-config.yaml   # Pre-commit hook configuration
+├── .streamlit/config.toml    # Streamlit theme/settings
+└── pyproject.toml            # Project metadata and dependencies
 ```
 
 ## ⚙️ Usage
@@ -54,18 +60,16 @@ Play the game [here](https://hatman-nba-fantasy-game.hf.space).
 ### Quick Start with uv (Recommended)
 
 ```bash
-# Install dependencies and run the app
-uv run streamlit run app.py
+# Install the project and run the app
+uv pip install -e .
+streamlit run app.py
 ```
 
-### Standard Installation
+### Development Setup
 
 ```bash
-# Install requirements
-pip install -r requirements.txt
-
-# Run the application
-streamlit run app.py
+# Install with dev dependencies (testing, linting, type checking)
+uv pip install -e ".[dev]"
 ```
 
 ## 🧪 Development
@@ -82,18 +86,29 @@ pytest --cov=src
 ### Linting and Type Checking
 ```bash
 # Run Ruff for linting and formatting
-ruff check .
+ruff check src/ tests/
 
 # Run Mypy for static type checking
-mypy .
+mypy src/
 ```
 
 ### Training the Model
-The project includes a comprehensive training pipeline to rebuild the model from scratch using the 2018 NBA season results:
+The training script rebuilds the model from scratch using 2018 NBA season results. It requires two input files in the project root:
+
+- `player_stats.txt` -- player roster and statistics
+- `schedule.txt` -- game schedule with scores
+
+Run the training:
 ```bash
 python scripts/compile_model.py
 ```
-This script performs an automated search for the best architecture and hyperparameters (optimizers, initializers, etc.) before saving the final `winner.keras` model.
+The script uses `RandomizedSearchCV` to search for optimal hyperparameters and saves the result as `winner.keras`, which is required at runtime for game predictions.
+
+## 📁 Data Files and Configuration
+
+- **`snowflake_nba.csv`**: Player statistics dataset loaded at runtime by `src/database/connection.py`. Path is resolved relative to the module location (project root).
+- **`winner.keras`**: Pre-trained Keras model loaded by `src/ml/model.py`. Path is resolved relative to the module location (project root).
+- **`src/config.py`**: Central configuration for column names, team size, difficulty presets, score ranges, and logging setup.
 
 ## 📄 License
 

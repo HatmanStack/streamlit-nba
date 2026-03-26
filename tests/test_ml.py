@@ -25,21 +25,54 @@ class TestAnalyzeTeamStats:
         # Combined has both teams = 100 values
         assert combined.shape == (1, 100)
 
-    def test_combined_contains_both_teams(
-        self, sample_team_stats: list[list[float]]
-    ) -> None:
+    def test_combined_contains_both_teams(self) -> None:
         """Test that combined array contains both teams' stats."""
-        home_stats = [[1.0, 2.0], [3.0, 4.0]]  # 2 players, 2 stats each
-        away_stats = [[5.0, 6.0], [7.0, 8.0]]
+        home_stats = [[float(i * 10 + j) for j in range(10)] for i in range(5)]
+        away_stats = [[float(50 + i * 10 + j) for j in range(10)] for i in range(5)]
 
-        _home_array, _away_array, combined = analyze_team_stats(
-            home_stats, away_stats
-        )
+        _home_array, _away_array, combined = analyze_team_stats(home_stats, away_stats)
 
-        # Home should be first 4 values, away next 4
-        np.testing.assert_array_equal(
-            combined[0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
-        )
+        # Combined should have 100 values: 50 home + 50 away
+        assert combined.shape == (1, 100)
+        # First value should be home[0][0], last should be away[4][9]
+        assert combined[0][0] == 0.0
+        assert combined[0][50] == 50.0
+
+
+class TestAnalyzeTeamStatsValidation:
+    """Tests for input shape validation in analyze_team_stats."""
+
+    def test_wrong_number_of_home_players_raises_error(self) -> None:
+        """Test that wrong number of home players raises ValueError."""
+        home_stats = [[1.0] * 10 for _ in range(4)]  # 4 players instead of 5
+        away_stats = [[1.0] * 10 for _ in range(5)]
+
+        with pytest.raises(ValueError, match="Expected 5 players"):
+            analyze_team_stats(home_stats, away_stats)
+
+    def test_wrong_number_of_away_players_raises_error(self) -> None:
+        """Test that wrong number of away players raises ValueError."""
+        home_stats = [[1.0] * 10 for _ in range(5)]
+        away_stats = [[1.0] * 10 for _ in range(6)]  # 6 players instead of 5
+
+        with pytest.raises(ValueError, match="Expected 5 players"):
+            analyze_team_stats(home_stats, away_stats)
+
+    def test_wrong_stat_count_raises_error(self) -> None:
+        """Test that wrong number of stats per player raises ValueError."""
+        home_stats = [[1.0] * 10 for _ in range(5)]
+        away_stats = [[1.0] * 10 for _ in range(4)] + [[1.0] * 9]  # player with 9 stats
+
+        with pytest.raises(ValueError, match="stats, expected 10"):
+            analyze_team_stats(home_stats, away_stats)
+
+    def test_home_player_wrong_stat_count_raises_error(self) -> None:
+        """Test that home player with wrong stat count raises ValueError."""
+        home_stats = [[1.0] * 9] + [[1.0] * 10 for _ in range(4)]  # first player has 9
+        away_stats = [[1.0] * 10 for _ in range(5)]
+
+        with pytest.raises(ValueError, match="stats, expected 10"):
+            analyze_team_stats(home_stats, away_stats)
 
 
 class TestPredictWinner:
@@ -63,9 +96,7 @@ class TestPredictWinner:
         assert prediction in (0, 1)
 
     @patch("src.ml.model.get_winner_model")
-    def test_high_probability_predicts_win(
-        self, mock_get_model: MagicMock
-    ) -> None:
+    def test_high_probability_predicts_win(self, mock_get_model: MagicMock) -> None:
         """Test that high probability (>0.5) predicts home win (1)."""
         mock_model = MagicMock()
         mock_model.predict.return_value = np.array([[0.8]])
@@ -78,9 +109,7 @@ class TestPredictWinner:
         assert prediction == 1
 
     @patch("src.ml.model.get_winner_model")
-    def test_low_probability_predicts_loss(
-        self, mock_get_model: MagicMock
-    ) -> None:
+    def test_low_probability_predicts_loss(self, mock_get_model: MagicMock) -> None:
         """Test that low probability (<0.5) predicts home loss (0)."""
         mock_model = MagicMock()
         mock_model.predict.return_value = np.array([[0.3]])
@@ -93,9 +122,7 @@ class TestPredictWinner:
         assert prediction == 0
 
     @patch("src.ml.model.get_winner_model")
-    def test_invalid_shape_raises_error(
-        self, mock_get_model: MagicMock
-    ) -> None:
+    def test_invalid_shape_raises_error(self, mock_get_model: MagicMock) -> None:
         """Test that invalid input shape raises ValueError."""
         mock_model = MagicMock()
         mock_get_model.return_value = mock_model
@@ -109,9 +136,7 @@ class TestPredictWinner:
         assert "Expected input shape (1, 100)" in str(exc_info.value)
 
     @patch("src.ml.model.get_winner_model")
-    def test_model_called_with_verbose_zero(
-        self, mock_get_model: MagicMock
-    ) -> None:
+    def test_model_called_with_verbose_zero(self, mock_get_model: MagicMock) -> None:
         """Test that model.predict is called with verbose=0."""
         mock_model = MagicMock()
         mock_model.predict.return_value = np.array([[0.5]])
@@ -123,8 +148,24 @@ class TestPredictWinner:
         mock_model.predict.assert_called_once_with(stats, verbose=0)
 
 
+class TestLoadRealModel:
+    """Integration test loading the real model file."""
+
+    def test_load_real_model(self) -> None:
+        """Verify real winner.keras loads with expected input/output shape."""
+        from src.ml.model import get_winner_model
+
+        model = get_winner_model()
+
+        assert model is not None
+        # Model expects 100 features (5 players x 10 stats x 2 teams)
+        assert model.input_shape == (None, 100)
+        # Binary classification: single sigmoid output
+        assert model.output_shape == (None, 1)
+
+
 class TestGetWinnerModel:
-    """Tests for get_winner_model caching."""
+    """Tests for get_winner_model loading."""
 
     @patch("src.ml.model.load_model")
     @patch("src.ml.model.Path")
@@ -133,9 +174,6 @@ class TestGetWinnerModel:
     ) -> None:
         """Test that missing model file raises ModelLoadError."""
         from src.ml.model import get_winner_model
-
-        # Clear the cache to ensure fresh test
-        get_winner_model.clear()
 
         mock_path_instance = MagicMock()
         mock_path_instance.exists.return_value = False

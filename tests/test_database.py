@@ -1,15 +1,61 @@
 """Tests for database module using local pandas data."""
 
+from unittest.mock import patch
+
 import pandas as pd
 import pytest
 
 from src.config import PLAYER_COLUMNS
-from src.database.connection import QueryExecutionError
+from src.database.connection import (
+    DatabaseConnectionError,
+    QueryExecutionError,
+    get_data,
+    load_data,
+)
 from src.database.queries import (
     get_away_team_by_stats,
     get_players_by_full_names,
     search_player_by_name,
 )
+
+
+class TestLoadData:
+    """Tests for load_data and get_data functions."""
+
+    def test_load_data_returns_dataframe(self) -> None:
+        """Test that load_data returns a DataFrame with uppercase columns."""
+        df = load_data()
+        assert isinstance(df, pd.DataFrame)
+        assert not df.empty
+        # All columns should be uppercase
+        for col in df.columns:
+            assert col == col.upper()
+
+    def test_get_data_returns_dataframe(self) -> None:
+        """Test that get_data returns a DataFrame."""
+        df = get_data()
+        assert isinstance(df, pd.DataFrame)
+        assert not df.empty
+
+    @patch("src.database.connection.CSV_PATH")
+    def test_load_data_missing_file_raises_error(self, mock_path) -> None:  # type: ignore[no-untyped-def]
+        """Test that missing CSV raises DatabaseConnectionError."""
+        mock_path.exists.return_value = False
+        with pytest.raises(DatabaseConnectionError, match="not found"):
+            load_data()
+
+    @patch("src.database.connection.pd.read_csv")
+    @patch("src.database.connection.CSV_PATH")
+    def test_load_data_parser_error_raises_connection_error(
+        self,
+        mock_path,
+        mock_read_csv,  # type: ignore[no-untyped-def]
+    ) -> None:
+        """Test that CSV parse errors raise DatabaseConnectionError."""
+        mock_path.exists.return_value = True
+        mock_read_csv.side_effect = pd.errors.ParserError("bad csv")
+        with pytest.raises(DatabaseConnectionError):
+            load_data()
 
 
 class TestSearchPlayerByName:
@@ -76,10 +122,12 @@ class TestGetAwayTeamByStats:
     def test_max_attempts_raises_error(self) -> None:
         """Test that max_attempts limit works when population is too small."""
         # Create a DF with only 2 players
-        df = pd.DataFrame([
-            {"FULL_NAME": "P1", "PTS": 1001, "REB": 501, "AST": 301, "STL": 101},
-            {"FULL_NAME": "P2", "PTS": 1001, "REB": 501, "AST": 301, "STL": 101},
-        ])
+        df = pd.DataFrame(
+            [
+                {"FULL_NAME": "P1", "PTS": 1001, "REB": 501, "AST": 301, "STL": 101},
+                {"FULL_NAME": "P2", "PTS": 1001, "REB": 501, "AST": 301, "STL": 101},
+            ]
+        )
         # Add missing columns to avoid errors if needed, though queries only use these
         for col in PLAYER_COLUMNS:
             if col not in df.columns:
@@ -102,10 +150,15 @@ class TestGetAwayTeamByStats:
         # Create a DF with 10 players meeting criteria
         data = []
         for i in range(10):
-            data.append({
-                "FULL_NAME": f"Player{i}",
-                "PTS": 2000, "REB": 1000, "AST": 500, "STL": 200
-            })
+            data.append(
+                {
+                    "FULL_NAME": f"Player{i}",
+                    "PTS": 2000,
+                    "REB": 1000,
+                    "AST": 500,
+                    "STL": 200,
+                }
+            )
         df = pd.DataFrame(data)
         for col in PLAYER_COLUMNS:
             if col not in df.columns:
@@ -121,3 +174,13 @@ class TestGetAwayTeamByStats:
 
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 5
+
+
+class TestCsvColumnValidation:
+    """Integration tests validating CSV data matches config."""
+
+    def test_csv_columns_match_config(self) -> None:
+        """Verify that actual CSV columns match PLAYER_COLUMNS in config."""
+        df = load_data()
+        assert not df.empty, "CSV file should not be empty"
+        assert list(df.columns) == PLAYER_COLUMNS

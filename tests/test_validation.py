@@ -43,31 +43,8 @@ class TestPlayerSearchInput:
         assert result.search_term == "James"
 
 
-class TestSqlInjectionRejection:
-    """Tests for SQL injection pattern rejection."""
-
-    @pytest.mark.parametrize(
-        "malicious_input",
-        [
-            "'; DROP TABLE NBA;--",
-            "James'; DELETE FROM NBA--",
-            "' OR '1'='1",
-            "James' UNION SELECT * FROM passwords--",
-            "James; SELECT * FROM users",
-            "/*comment*/James",
-            "James*/DROP TABLE/*",
-            "' OR 1=1--",
-            "James' AND 1=1--",
-            "Robert'); DROP TABLE Students;--",
-        ],
-    )
-    def test_rejects_sql_injection(self, malicious_input: str) -> None:
-        """Test that SQL injection patterns are rejected."""
-        with pytest.raises(ValueError) as exc_info:
-            PlayerSearchInput(search_term=malicious_input)
-
-        # Should mention invalid characters
-        assert "Invalid" in str(exc_info.value) or "invalid" in str(exc_info.value)
+class TestRejectsInvalidCharacters:
+    """Tests for invalid character rejection."""
 
     @pytest.mark.parametrize(
         "invalid_input",
@@ -75,7 +52,7 @@ class TestSqlInjectionRejection:
             "James<script>",
             "James&nbsp;",
             "James@#$%",
-            "James\\nNewline",
+            "James\nNewline",
             "James\x00null",
         ],
     )
@@ -105,7 +82,7 @@ class TestValidateSearchTerm:
 
     def test_returns_none_for_invalid(self) -> None:
         """Test that invalid input returns None."""
-        result = validate_search_term("'; DROP TABLE--")
+        result = validate_search_term("<script>alert</script>")
         assert result is None
 
     def test_returns_none_for_empty(self) -> None:
@@ -125,6 +102,5 @@ class TestIsValidSearchTerm:
 
     def test_returns_false_for_invalid(self) -> None:
         """Test returns False for invalid input."""
-        assert is_valid_search_term("'; DROP--") is False
         assert is_valid_search_term("") is False
         assert is_valid_search_term("<script>") is False

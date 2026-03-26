@@ -1,11 +1,12 @@
-"""Machine learning model loading and prediction with caching."""
+"""Machine learning model loading and prediction."""
 
 import logging
 from pathlib import Path
 
 import numpy as np
-import streamlit as st
 from tensorflow.keras.models import Model, load_model
+
+from src.config import STAT_COLUMNS, TEAM_SIZE
 
 logger = logging.getLogger("streamlit_nba")
 
@@ -19,12 +20,8 @@ class ModelLoadError(Exception):
     pass
 
 
-@st.cache_resource
 def get_winner_model(model_path: str | Path = DEFAULT_MODEL_PATH) -> Model:
-    """Load and cache the winner prediction model.
-
-    Uses Streamlit's cache_resource to ensure model is only loaded once
-    per session, improving performance significantly.
+    """Load the winner prediction model.
 
     Args:
         model_path: Path to the Keras model file
@@ -37,16 +34,16 @@ def get_winner_model(model_path: str | Path = DEFAULT_MODEL_PATH) -> Model:
     """
     path = Path(model_path)
     if not path.exists():
-        logger.error(f"Model file not found: {path}")
+        logger.error("Model file not found: %s", path)
         raise ModelLoadError(f"Model file not found: {path}")
 
     try:
-        logger.info(f"Loading model from {path}")
+        logger.info("Loading model from %s", path)
         model = load_model(str(path))
         logger.info("Model loaded successfully")
         return model
     except Exception as e:
-        logger.error(f"Failed to load model: {e}")
+        logger.error("Failed to load model: %s", e)
         raise ModelLoadError(f"Failed to load model: {e}") from e
 
 
@@ -67,16 +64,14 @@ def predict_winner(combined_stats: np.ndarray) -> tuple[float, int]:
         ValueError: If input shape is invalid
     """
     if combined_stats.shape != (1, 100):
-        raise ValueError(
-            f"Expected input shape (1, 100), got {combined_stats.shape}"
-        )
+        raise ValueError(f"Expected input shape (1, 100), got {combined_stats.shape}")
 
     model = get_winner_model()
     sigmoid_output = model.predict(combined_stats, verbose=0)
     probability = float(sigmoid_output[0][0])
     prediction = int(np.round(probability))
 
-    logger.info(f"Prediction: probability={probability:.4f}, winner={prediction}")
+    logger.info("Prediction: probability=%.4f, winner=%d", probability, prediction)
     return probability, prediction
 
 
@@ -98,6 +93,28 @@ def analyze_team_stats(
             - away_array: Shape (1, 50) - away team flattened stats
             - combined_array: Shape (1, 100) - both teams for prediction
     """
+    expected_stats = len(STAT_COLUMNS)
+
+    if len(home_stats) != TEAM_SIZE:
+        raise ValueError(
+            f"Expected {TEAM_SIZE} players for home team, got {len(home_stats)}"
+        )
+    if len(away_stats) != TEAM_SIZE:
+        raise ValueError(
+            f"Expected {TEAM_SIZE} players for away team, got {len(away_stats)}"
+        )
+
+    for i, player in enumerate(home_stats):
+        if len(player) != expected_stats:
+            raise ValueError(
+                f"Home player {i} has {len(player)} stats, expected {expected_stats}"
+            )
+    for i, player in enumerate(away_stats):
+        if len(player) != expected_stats:
+            raise ValueError(
+                f"Away player {i} has {len(player)} stats, expected {expected_stats}"
+            )
+
     home_flat: list[float] = []
     away_flat: list[float] = []
 

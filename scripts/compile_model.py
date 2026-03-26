@@ -70,9 +70,7 @@ EPOCHS: list[int] = [500, 1000, 1500]
 BATCH_SIZES: list[int] = [50, 100, 200]
 
 
-def create_stats(
-    roster: pd.DataFrame, schedule: pd.DataFrame
-) -> list[np.ndarray]:
+def create_stats(roster: pd.DataFrame, schedule: pd.DataFrame) -> list[np.ndarray]:
     """Create feature arrays from roster and schedule data.
 
     Args:
@@ -82,8 +80,8 @@ def create_stats(
     Returns:
         List of numpy arrays, one per game with combined team stats
     """
-    home_stats: list[list] = []
-    away_stats: list[list] = []
+    home_stats: list[list[list[str | float]]] = []
+    away_stats: list[list[list[str | float]]] = []
     features: list[np.ndarray] = []
 
     new_roster = roster[FEATURE_COLS]
@@ -97,15 +95,13 @@ def create_stats(
 
     # Combine home and away stats for each game
     for i in range(len(home_stats)):
-        arr: list[float] = []
+        arr: list[str | float] = []
 
-        for j in range(len(home_stats[i])):
-            del home_stats[i][j][0]  # Remove team name
-            arr.extend(home_stats[i][j])
+        for row in home_stats[i]:
+            arr.extend(row[1:])  # Skip team name column
 
-        for j in range(len(away_stats[i])):
-            del away_stats[i][j][0]  # Remove team name
-            arr.extend(away_stats[i][j])
+        for row in away_stats[i]:
+            arr.extend(row[1:])  # Skip team name column
 
         # Handle NaN values
         features.append(np.nan_to_num(np.array(arr), copy=False))
@@ -172,7 +168,7 @@ def train_model(
         "init": INITIALIZERS,
     }
 
-    logger.info(f"Starting randomized search with {n_iterations} iterations")
+    logger.info("Starting randomized search with %d iterations", n_iterations)
 
     random_search = RandomizedSearchCV(
         estimator=model,
@@ -195,17 +191,17 @@ def main() -> None:
     logger.info("Loading data files")
 
     if not ROSTER_FILE.exists():
-        logger.error(f"Roster file not found: {ROSTER_FILE}")
+        logger.error("Roster file not found: %s", ROSTER_FILE)
         raise FileNotFoundError(f"Missing {ROSTER_FILE}")
 
     if not SCHEDULE_FILE.exists():
-        logger.error(f"Schedule file not found: {SCHEDULE_FILE}")
+        logger.error("Schedule file not found: %s", SCHEDULE_FILE)
         raise FileNotFoundError(f"Missing {SCHEDULE_FILE}")
 
     roster = pd.read_csv(ROSTER_FILE, delimiter=",")
     schedule = pd.read_csv(SCHEDULE_FILE, delimiter=",")
 
-    logger.info(f"Loaded {len(roster)} players and {len(schedule)} games")
+    logger.info("Loaded %d players and %d games", len(roster), len(schedule))
 
     # Create target variable: 0 = home wins, 1 = away wins
     schedule["winner"] = schedule.apply(
@@ -217,14 +213,14 @@ def main() -> None:
     X = np.array(create_stats(roster, schedule))
     y = np.array(schedule["winner"])
 
-    logger.info(f"Feature shape: {X.shape}, Target shape: {y.shape}")
+    logger.info("Feature shape: %s, Target shape: %s", X.shape, y.shape)
 
     # Split data
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
 
-    logger.info(f"Train size: {len(X_train)}, Test size: {len(X_test)}")
+    logger.info("Train size: %d, Test size: %d", len(X_train), len(X_test))
 
     # Train model
     best_model, best_params, test_accuracy = train_model(
@@ -232,11 +228,11 @@ def main() -> None:
     )
 
     # Save model
-    logger.info(f"Saving model to {OUTPUT_MODEL}")
+    logger.info("Saving model to %s", OUTPUT_MODEL)
     best_model.save(OUTPUT_MODEL)
 
-    logger.info(f"Best parameters: {best_params}")
-    logger.info(f"Test accuracy: {test_accuracy:.4f}")
+    logger.info("Best parameters: %s", best_params)
+    logger.info("Test accuracy: %.4f", test_accuracy)
 
 
 if __name__ == "__main__":

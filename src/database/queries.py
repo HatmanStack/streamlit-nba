@@ -1,7 +1,6 @@
 """Local data queries using pandas on loaded CSV data."""
 
 import logging
-from typing import Any
 
 import pandas as pd
 
@@ -31,27 +30,7 @@ def search_player_by_name(df: pd.DataFrame, name: str) -> list[tuple[str]]:
     return [(player_name,) for player_name in results]
 
 
-def get_player_by_full_name(
-    df: pd.DataFrame, full_name: str
-) -> tuple[Any, ...] | None:
-    """Get a single player's full record by exact name match.
-
-    Args:
-        df: Player DataFrame
-        full_name: Exact full name of player
-
-    Returns:
-        Player data tuple or None if not found
-    """
-    result = df[df["FULL_NAME"] == full_name]
-    if result.empty:
-        return None
-    return tuple(result.iloc[0].values)
-
-
-def get_players_by_full_names(
-    df: pd.DataFrame, names: list[str]
-) -> pd.DataFrame:
+def get_players_by_full_names(df: pd.DataFrame, names: list[str]) -> pd.DataFrame:
     """Get multiple players' records in a single batch query.
 
     Args:
@@ -138,11 +117,11 @@ def get_away_team_by_stats(
 
             results = df.loc[list(selected_indices)]
             if len(results) == 5:
-                logger.info(f"Got away team on attempt {attempt + 1}")
+                logger.info("Got away team on attempt %d", attempt + 1)
                 return results
 
         except ValueError as e:
-            logger.debug(f"Attempt {attempt + 1} failed: {e}")
+            logger.debug("Attempt %d failed: %s", attempt + 1, e)
             continue
 
     raise QueryExecutionError(

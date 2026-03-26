@@ -1,84 +1,10 @@
-"""Pydantic models for player and game data."""
+"""Pydantic models for game data."""
 
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from pydantic import BaseModel, Field, field_validator
 
 from src.config import DIFFICULTY_PRESETS
-
-
-class PlayerStats(BaseModel):
-    """Model representing a player's career statistics."""
-
-    full_name: str = Field(..., min_length=1, max_length=100)
-    ast: int = Field(..., ge=0, description="Career assists")
-    blk: int = Field(..., ge=0, description="Career blocks")
-    dreb: int = Field(..., ge=0, description="Career defensive rebounds")
-    fg3a: int = Field(..., ge=0, description="Career 3-point attempts")
-    fg3m: int = Field(..., ge=0, description="Career 3-pointers made")
-    fg3_pct: float = Field(..., ge=0.0, le=1.0, description="3-point percentage")
-    fga: int = Field(..., ge=0, description="Career field goal attempts")
-    fgm: int = Field(..., ge=0, description="Career field goals made")
-    fg_pct: float = Field(..., ge=0.0, le=1.0, description="Field goal percentage")
-    fta: int = Field(..., ge=0, description="Career free throw attempts")
-    ftm: int = Field(..., ge=0, description="Career free throws made")
-    ft_pct: float = Field(..., ge=0.0, le=1.0, description="Free throw percentage")
-    gp: int = Field(..., ge=0, description="Games played")
-    gs: int = Field(..., ge=0, description="Games started")
-    min: int = Field(..., ge=0, description="Career minutes")
-    oreb: int = Field(..., ge=0, description="Career offensive rebounds")
-    pf: int = Field(..., ge=0, description="Career personal fouls")
-    pts: int = Field(..., ge=0, description="Career points")
-    reb: int = Field(..., ge=0, description="Career rebounds")
-    stl: int = Field(..., ge=0, description="Career steals")
-    tov: int = Field(..., ge=0, description="Career turnovers")
-    first_name: str = Field(..., max_length=50)
-    last_name: str = Field(..., max_length=50)
-    full_name_lower: str = Field(..., max_length=100)
-    first_name_lower: str = Field(..., max_length=50)
-    last_name_lower: str = Field(..., max_length=50)
-    is_active: bool = Field(default=False)
-
-    @classmethod
-    def from_db_row(cls, row: tuple[Any, ...]) -> "PlayerStats":
-        """Create PlayerStats from a database row tuple.
-
-        Args:
-            row: Database row tuple in PLAYER_COLUMNS order
-
-        Returns:
-            PlayerStats instance
-        """
-        return cls(
-            full_name=row[0],
-            ast=row[1],
-            blk=row[2],
-            dreb=row[3],
-            fg3a=row[4],
-            fg3m=row[5],
-            fg3_pct=row[6] or 0.0,
-            fga=row[7],
-            fgm=row[8],
-            fg_pct=row[9] or 0.0,
-            fta=row[10],
-            ftm=row[11],
-            ft_pct=row[12] or 0.0,
-            gp=row[13],
-            gs=row[14],
-            min=row[15],
-            oreb=row[16],
-            pf=row[17],
-            pts=row[18],
-            reb=row[19],
-            stl=row[20],
-            tov=row[21],
-            first_name=row[22],
-            last_name=row[23],
-            full_name_lower=row[24],
-            first_name_lower=row[25],
-            last_name_lower=row[26],
-            is_active=bool(row[27]) if row[27] is not None else False,
-        )
 
 
 class DifficultySettings(BaseModel):
@@ -116,12 +42,18 @@ class DifficultySettings(BaseModel):
         Raises:
             ValueError: If preset_name is not valid
         """
-        if preset_name not in DIFFICULTY_PRESETS:
-            raise ValueError(
-                f"Unknown difficulty preset: {preset_name}. "
-                f"Valid options: {', '.join(sorted(DIFFICULTY_PRESETS.keys()))}"
+        preset = DIFFICULTY_PRESETS.get(preset_name)
+        if preset is None:
+            # Pass invalid name to constructor; the field_validator on
+            # `name` will raise ValueError with valid preset options.
+            return cls(
+                name=preset_name,
+                pts_threshold=0,
+                reb_threshold=0,
+                ast_threshold=0,
+                stl_threshold=0,
             )
-        pts, reb, ast, stl = DIFFICULTY_PRESETS[preset_name]
+        pts, reb, ast, stl = preset
         return cls(
             name=preset_name,
             pts_threshold=pts,

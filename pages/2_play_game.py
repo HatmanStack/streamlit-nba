@@ -14,26 +14,31 @@ from src.config import (
     STAT_COLUMNS,
     TEAM_SIZE,
     WINNER_SCORE_RANGE,
+    configure_page,
 )
 from src.database.connection import (
     DatabaseConnectionError,
     QueryExecutionError,
-    get_connection,
+    load_data,
 )
 from src.database.queries import get_away_team_by_stats
-from src.ml.model import ModelLoadError, analyze_team_stats, predict_winner
+from src.ml.model import (
+    ModelLoadError,
+    analyze_team_stats,
+    predict_winner,
+)
 from src.state.session import get_away_stats, get_home_team_df, init_session_state
 from src.utils.html import safe_heading
 
 logger = logging.getLogger("streamlit_nba")
 
-
-def on_page_load() -> None:
-    """Configure page settings."""
-    st.set_page_config(layout="wide")
+configure_page()
 
 
-on_page_load()
+@st.cache_data
+def _load_nba_data() -> pd.DataFrame:
+    return load_data()
+
 
 # Initialize session state BEFORE any access
 init_session_state()
@@ -53,22 +58,22 @@ def find_away_team(stat_thresholds: list[int]) -> pd.DataFrame:
         DataFrame with away team data, or empty DataFrame on error
     """
     try:
-        with get_connection() as conn:
-            return get_away_team_by_stats(
-                conn,
-                pts_threshold=stat_thresholds[0],
-                reb_threshold=stat_thresholds[1],
-                ast_threshold=stat_thresholds[2],
-                stl_threshold=stat_thresholds[3],
-                max_attempts=MAX_QUERY_ATTEMPTS,
-            )
+        data = _load_nba_data()
+        return get_away_team_by_stats(
+            data,
+            pts_threshold=stat_thresholds[0],
+            reb_threshold=stat_thresholds[1],
+            ast_threshold=stat_thresholds[2],
+            stl_threshold=stat_thresholds[3],
+            max_attempts=MAX_QUERY_ATTEMPTS,
+        )
     except DatabaseConnectionError as e:
-        st.error("Could not connect to database. Please try again later.")
-        logger.error(f"Database connection error: {e}")
+        st.error("Could not load player data. Please try again later.")
+        logger.error("Data load error: %s", e)
         return pd.DataFrame()
     except QueryExecutionError as e:
         st.error("Could not generate away team. Please try again.")
-        logger.error(f"Query error: {e}")
+        logger.error("Query error: %s", e)
         return pd.DataFrame()
 
 
@@ -125,7 +130,10 @@ if home_team_df.empty or home_team_df.shape[0] != TEAM_SIZE:
     box_score = pd.DataFrame()
 else:
     # Only generate away team if we don't have one or it's empty
-    if st.session_state.get("away_team_df") is None or st.session_state.away_team_df.empty:
+    if (
+        st.session_state.get("away_team_df") is None
+        or st.session_state.away_team_df.empty
+    ):
         st.session_state.away_team_df = find_away_team(stats)
 
     away_data = st.session_state.away_team_df
@@ -168,17 +176,17 @@ if teams_good and not st.session_state.away_team_df.empty:
             index=["Home Team", "Away Team"],
         )
 
-        logger.info(f"Prediction: {probability:.4f}")
+        logger.info("Prediction: %.4f", probability)
 
     except ModelLoadError as e:
         st.error("Could not load prediction model. Please contact support.")
-        logger.error(f"Model load error: {e}")
+        logger.error("Model load error: %s", e)
         teams_good = False
         winner_label = ""
         box_score = pd.DataFrame()
     except ValueError as e:
         st.error("Error processing team stats. Please try again.")
-        logger.error(f"Stats processing error: {e}")
+        logger.error("Stats processing error: %s", e)
         teams_good = False
         winner_label = ""
         box_score = pd.DataFrame()
@@ -197,9 +205,11 @@ if teams_good and winner_label:
 safe_heading("Away Team", level=1, color="steelblue")
 st.dataframe(st.session_state.away_team_df)
 
+
 def play_new_team() -> None:
     """Clear cached away team and rerun."""
     logger.info("New Team requested")
     st.session_state.away_team_df = pd.DataFrame()
+
 
 st.button("Play New Team", on_click=play_new_team)
