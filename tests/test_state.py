@@ -3,7 +3,6 @@
 from unittest.mock import patch
 
 import pandas as pd
-import pytest
 
 from src.config import DIFFICULTY_PRESETS
 
