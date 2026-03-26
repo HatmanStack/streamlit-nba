@@ -17,6 +17,8 @@ pillars:
   onboarding: 7
 ---
 
+> **Snapshot context:** This document captures pre-remediation (baseline) findings from the 2026-03-25 audit. Scores and evidence reflect the codebase state before the remediation PR. Items addressed during remediation are annotated inline.
+
 ## HIRE EVALUATION -- The Pragmatist
 
 ### VERDICT
@@ -25,12 +27,13 @@ pillars:
 - **One-Line:** Well-structured toy app that demonstrates strong defensive habits but lacks depth in the ML pipeline and leaves Pydantic models mostly unused.
 
 ### SCORECARD
+
 | Pillar | Score | Evidence |
 |--------|-------|----------|
-| Problem-Solution Fit | 6/10 | `requirements.txt:2` TensorFlow is a heavyweight dependency for a binary classifier on 100 features; `src/validation/inputs.py:8-28` SQL injection protection for a local CSV pandas app (no SQL database) |
-| Architecture | 7/10 | `src/database/__init__.py:1-23` clean module boundaries with `__all__` exports; `src/models/player.py:10-81` Pydantic `PlayerStats` model defined but never used in the actual data flow (pages operate on raw DataFrames) |
+| Problem-Solution Fit | 6/10 | `requirements.txt:2` TensorFlow is a heavyweight dependency for a binary classifier on 100 features *(TF retained, see ADR-2)*; `src/validation/inputs.py:8-28` SQL injection protection for a local CSV pandas app *(remediated: SQL regex removed, character allowlist retained)* |
+| Architecture | 7/10 | `src/database/__init__.py:1-23` clean module boundaries with `__all__` exports; `src/models/player.py:10-81` Pydantic `PlayerStats` model defined but never used *(remediated: `PlayerStats` removed, `DifficultySettings` retained)* |
 | Code Quality | 8/10 | `src/utils/html.py:12-47` proper XSS escaping with `html.escape`; `pages/2_play_game.py:96-110` defensive score generation with fallback; zero `print()` statements, zero TODOs, consistent docstrings throughout |
-| Creativity | 6/10 | `scripts/compile_model.py:73-113` `create_stats` mutates input lists via `del home_stats[i][j][0]` which is fragile and side-effect-heavy; `src/database/queries.py:96-151` away team generation algorithm is a reasonable approach but nothing inventive |
+| Creativity | 6/10 | `scripts/compile_model.py:73-113` `create_stats` mutates input lists via `del` *(remediated: replaced with slicing)*; `src/database/queries.py:96-151` away team generation algorithm is a reasonable approach but nothing inventive |
 
 ### HIGHLIGHTS
 - **Brilliance:** The security posture is notably strong for a Streamlit project. `src/utils/html.py:24-47` escapes all user-provided values before injecting into HTML markup, including color and alignment parameters, not just text. `src/validation/inputs.py:8-28` provides a compiled regex with 13 SQL injection patterns plus character validation. The test suite at `tests/test_validation.py:46-85` covers 10 parametrized injection vectors and 5 special character attacks, showing genuine security awareness.
@@ -49,9 +52,9 @@ pillars:
   - Estimated complexity: MEDIUM
 
 - **Architecture (current: 7/10, target: 9/10)**
-  - Either use the Pydantic models or remove them. Specifically, `src/models/player.py` `PlayerStats` should be integrated into `src/database/queries.py` so that query functions return validated model instances instead of raw DataFrames. Alternatively, delete the models and rely on DataFrame typing (the current de facto approach).
-  - The `GameState` dataclass in `src/state/session.py:18-28` is defined but never instantiated. `init_session_state()` at line 31 uses a plain dict instead. Unify to one approach.
-  - The `get_connection()` context manager at `src/database/connection.py:54-73` wraps a cached DataFrame read, which does not need resource cleanup. Simplify to a direct function call or at minimum remove the empty `finally: pass`.
+  - Either use the Pydantic models or remove them. *(Remediated: `PlayerStats` removed, `DifficultySettings` retained.)*
+  - The `GameState` dataclass is defined but never instantiated. *(Remediated: `GameState` removed.)*
+  - The `get_connection()` context manager wraps a cached DataFrame read with no resource cleanup. *(Remediated: replaced with plain `get_data()` function, `finally: pass` removed.)*
   - Estimated complexity: MEDIUM
 
 - **Code Quality (current: 8/10, target: 9/10)**
@@ -74,12 +77,13 @@ pillars:
 - **One-Line:** Well-organized Streamlit app with genuine defensive coding, but the ML pipeline has silent shape assumption bombs and the "database" layer is ceremony over substance.
 
 ### SCORECARD
+
 | Pillar | Score | Evidence |
 |--------|-------|----------|
-| Pragmatism | 6/10 | `src/database/connection.py:54-73` context manager wrapping a cached DataFrame read is pure ceremony; `src/validation/inputs.py:8-24` SQL injection guards on a CSV file |
-| Defensiveness | 7/10 | `pages/2_play_game.py:139-184` proper try/catch chains with user-facing errors; `src/ml/model.py:69-70` shape validation before prediction |
-| Performance | 7/10 | `src/database/connection.py:29` `@st.cache_data` on CSV load; `pages/1_home_team.py:86-88` batch query instead of N+1 |
-| Type Rigor | 7/10 | `src/models/player.py:10-41` thorough Pydantic model with constraints; `src/database/queries.py:36` `tuple[Any, ...]` return type is imprecise |
+| Pragmatism | 6/10 | `src/database/connection.py:54-73` context manager wrapping a cached DataFrame read *(remediated: replaced with plain function)*; `src/validation/inputs.py:8-24` SQL injection guards on a CSV file *(remediated: SQL regex removed)* |
+| Defensiveness | 7/10 | `pages/2_play_game.py:139-184` proper try/catch chains with user-facing errors; `src/ml/model.py:69-70` shape validation before prediction *(remediated: added input shape validation in `analyze_team_stats`)* |
+| Performance | 7/10 | `src/database/connection.py:29` `@st.cache_data` on CSV load *(remediated: caching moved to page layer)*; `pages/1_home_team.py:86-88` batch query instead of N+1 |
+| Type Rigor | 7/10 | `src/models/player.py:10-41` thorough Pydantic model with constraints *(remediated: `PlayerStats` removed)*; `src/database/queries.py:36` `tuple[Any, ...]` return type *(remediated: types tightened)* |
 
 ### CRITICAL FAILURE POINTS
 
@@ -143,19 +147,20 @@ None that are automatic no-go items. No global state leaks, no unhandled promise
 - **One-Line:** "Well-structured code written for the next person, but the onboarding path has gaps and git history tells two different stories."
 
 ### SCORECARD
+
 | Pillar | Score | Evidence |
 |--------|-------|----------|
-| Test Value | 7/10 | `tests/test_validation.py:46-85` SQL injection tests document real security behavior; `tests/test_ml.py:48-123` over-mocks the model layer, coupling to implementation |
-| Reproducibility | 7/10 | `pyproject.toml` has full tool config; `.github/workflows/ci.yml` runs tests+lint+mypy; but `.gitignore` is a single line (`/venv`) missing coverage artifacts, `.coverage`, and `__pycache__` |
+| Test Value | 7/10 | `tests/test_validation.py:46-85` SQL injection tests document real security behavior *(remediated: SQL tests removed with SQL code)*; `tests/test_ml.py:48-123` over-mocks the model layer *(remediated: real model load test added)* |
+| Reproducibility | 7/10 | `pyproject.toml` has full tool config; `.github/workflows/ci.yml` runs tests+lint+mypy; but `.gitignore` is a single line *(remediated: expanded to 29 lines)* |
 | Git Hygiene | 5/10 | `6424951` is a 2000+ line mega-commit creating entire `src/`, `tests/`, and `scripts/` directories; early history is "score update" x5, "README update" x4 |
 | Onboarding | 7/10 | `README.md` has quick start, test commands, project structure; missing `.env.example`, no prereq for the `.keras` model file, no contributing guide |
 
 ### RED FLAGS
 - **Minimal .gitignore**: Contains only `/venv`. A junior would commit build artifacts on day one.
 - **Binary model file in git** (`winner.keras`, 87KB): Checked into the repo with no Git LFS.
-- **Coverage threshold at 50%** (`pyproject.toml:113`): Low bar that signals "we have tests" rather than "we trust our tests."
+- **Coverage threshold at 50%** (`pyproject.toml:113`): *(Remediated: threshold raised to 70%, enforced in CI with `--cov-fail-under=70`. Actual coverage: 93.60%.)*
 - **Mega-commit** (`6424951`): "Refactor app with security fixes, error handling, and type safety" touches 30+ files with 2000+ insertions.
-- **No pre-commit hooks**: No `.pre-commit-config.yaml` or `.husky/` directory.
+- **No pre-commit hooks**: *(Remediated: `.pre-commit-config.yaml` added with ruff and mypy hooks.)*
 - **Two virtual environments**: Both `.venv/` and `venv/` exist in the repo root.
 
 ### HIGHLIGHTS
@@ -178,8 +183,8 @@ None that are automatic no-go items. No global state leaks, no unhandled promise
 - **Test Value (current: 7/10, target: 9/10)**
   - Add an integration test that loads the actual CSV and validates column order matches `PLAYER_COLUMNS`.
   - Add at least one test in `test_ml.py` that loads the real `winner.keras` model.
-  - Raise coverage threshold from 50% to 70% and add `--cov-fail-under=70` to CI.
-  - Add tests for `src/state/session.py` and `src/utils/html.py`.
+  - Raise coverage threshold from 50% to 70% and add `--cov-fail-under=70` to CI. *(Remediated: threshold at 70%, CI enforces it.)*
+  - Add tests for `src/state/session.py` and `src/utils/html.py`. *(Remediated: `tests/test_state.py` and `tests/test_utils.py` added.)*
   - Estimated complexity: MEDIUM
 
 - **Reproducibility (current: 7/10, target: 9/10)**

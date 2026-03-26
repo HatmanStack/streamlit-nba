@@ -85,7 +85,7 @@ ci(deps): consolidate to pyproject.toml, remove requirements files
           entry: mypy src/
   ```
 - Add `pre-commit` to the dev dependencies in `pyproject.toml`:
-  ```
+  ```toml
   "pre-commit>=3.0.0",
   ```
 - Verify the hooks work: `uvx pre-commit run --all-files`.

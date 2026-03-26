@@ -74,8 +74,8 @@ def find_away_team(stat_thresholds: list[int]) -> pd.DataFrame:
             max_attempts=MAX_QUERY_ATTEMPTS,
         )
     except DatabaseConnectionError as e:
-        st.error("Could not connect to database. Please try again later.")
-        logger.error("Database connection error: %s", e)
+        st.error("Could not load player data. Please try again later.")
+        logger.error("Data load error: %s", e)
         return pd.DataFrame()
     except QueryExecutionError as e:
         st.error("Could not generate away team. Please try again.")

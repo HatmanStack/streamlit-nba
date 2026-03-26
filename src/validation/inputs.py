@@ -30,9 +30,11 @@ class PlayerSearchInput(BaseModel):
             ValueError: If invalid characters found
         """
         v = v.strip()
+        if not v:
+            raise ValueError("Search term cannot be empty.")
         # Allow letters, numbers, spaces, hyphens, periods, and apostrophes
         # (e.g., "O'Neal", "J.R. Smith")
-        if not re.match(r"^[a-zA-Z0-9\s\-.']+$", v):
+        if not re.match(r"^[a-zA-Z0-9 \-.']+$", v):
             raise ValueError(
                 "Search term contains invalid characters. "
                 "Please use only letters, numbers, spaces, hyphens, "

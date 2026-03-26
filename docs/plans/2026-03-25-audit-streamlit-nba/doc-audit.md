@@ -11,6 +11,8 @@ drift_prevention: markdownlint + lychee
 language_stack: python + js/ts
 ---
 
+> **Snapshot context:** This document captures pre-remediation findings from the 2026-03-25 audit. Items addressed during the remediation PR are annotated inline.
+
 ## DOCUMENTATION AUDIT
 
 ### SUMMARY
@@ -38,7 +40,7 @@ language_stack: python + js/ts
    - Tree does not mention `snowflake_nba.csv` (the actual data source used at runtime).
    - Tree does not mention `player_stats.txt` or `schedule.txt` (training data files).
    - Tree does not mention `winner_model/` directory (alternative SavedModel format alongside `winner.keras`).
-   - Tree does not mention `.streamlit/config.toml`, `.devcontainer/devcontainer.json`, or `.github/` workflows.
+   - Tree does not mention `.streamlit/config.toml`, `.devcontainer/devcontainer.json`, or `.github/` workflows (GitHub Actions CI).
 
 4. **`README.md:21-22`** - "comprehensive database of historical NBA stats"
    - Doc says: "Search for players from a comprehensive database of historical NBA stats."
@@ -48,15 +50,15 @@ language_stack: python + js/ts
 
 ### GAPS (code exists, no doc)
 
-1. **`src/config.py`** - Central configuration module with `PLAYER_COLUMNS`, `STAT_COLUMNS`, `TEAM_SIZE`, `MAX_QUERY_ATTEMPTS`, `DIFFICULTY_PRESETS`, score ranges, and `setup_logging()`. Not mentioned anywhere in documentation.
+1. **`src/config.py`** - Central configuration module with `PLAYER_COLUMNS`, `STAT_COLUMNS`, `TEAM_SIZE`, `MAX_QUERY_ATTEMPTS`, `DIFFICULTY_PRESETS`, score ranges, and `setup_logging()`. Not mentioned anywhere in documentation. *(Partially addressed: README now documents data file paths and config module.)*
 
-2. **`src/models/player.py`** - Pydantic models `PlayerStats` and `DifficultySettings` with validation logic. No documentation describes the data models or their validation rules.
+2. **`src/models/player.py`** - ~~Pydantic models `PlayerStats` and `DifficultySettings` with validation logic.~~ *(Remediated: `PlayerStats` and `from_db_row` removed. Only `DifficultySettings` remains, which is an internal model used by session state.)*
 
-3. **`src/state/session.py`** - Session state management including `GameState` dataclass, `init_session_state()`, `get_away_stats()`, `get_home_team_df()`, `get_home_team_names()`, `set_difficulty()`, `add_player_to_team()`, `remove_player_from_team()`. None documented.
+3. **`src/state/session.py`** - ~~Session state management including `GameState` dataclass, `init_session_state()`, `get_away_stats()`, `get_home_team_df()`, `get_home_team_names()`, `set_difficulty()`, `add_player_to_team()`, `remove_player_from_team()`.~~ *(Remediated: `GameState`, `get_home_team_names`, `set_difficulty`, `add_player_to_team`, and `remove_player_from_team` removed. Remaining functions: `init_session_state()`, `get_away_stats()`, `get_home_team_df()`.)*
 
-4. **`src/utils/html.py`** - XSS protection utilities (`escape_html`, `safe_heading`, `safe_paragraph`, `safe_styled_text`). The README mentions nothing about security or HTML sanitization.
+4. **`src/utils/html.py`** - ~~XSS protection utilities (`escape_html`, `safe_heading`, `safe_paragraph`, `safe_styled_text`).~~ *(Remediated: `safe_styled_text` removed. Remaining functions: `escape_html`, `safe_heading`, `safe_paragraph`.)*
 
-5. **`src/validation/inputs.py`** - SQL injection protection with `PlayerSearchInput` model, `SQL_INJECTION_PATTERNS`, `validate_search_term()`, `is_valid_search_term()`. README line 22 mentions "Input validation for secure and accurate player searches" but provides no details about what validation is performed or why SQL injection protection exists when the data source is a local CSV.
+5. **`src/validation/inputs.py`** - ~~SQL injection protection with `PlayerSearchInput` model, `SQL_INJECTION_PATTERNS`, `validate_search_term()`, `is_valid_search_term()`.~~ *(Remediated: `SQL_INJECTION_PATTERNS` regex removed. Validation now uses a character allowlist only. `PlayerSearchInput`, `validate_search_term()`, and `is_valid_search_term()` remain.)*
 
 ---
 

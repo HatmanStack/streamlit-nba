@@ -48,7 +48,7 @@ The app reads from a local CSV via pandas. There is no SQL database. The SQL inj
 
 Use conventional commits:
 
-```
+```text
 type(scope): brief description
 ```
 

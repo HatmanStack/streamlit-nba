@@ -247,8 +247,8 @@ refactor(pages): extract shared configure_page, remove finally:pass
 
 After completing all tasks in this phase:
 
-1. Run `pytest` and confirm all tests pass.
-2. Run `ruff check src/ tests/` and confirm no lint errors.
-3. Run `mypy src/` and confirm no type errors.
-4. Run `git diff --stat` and confirm only expected files changed.
+1. Execute `pytest` and confirm all tests pass.
+2. Lint with `ruff check src/ tests/` and confirm no errors.
+3. Type-check with `mypy src/` and confirm no errors.
+4. Verify with `git diff --stat` that only expected files changed.
 5. Verify no dead code identified in the health audit remains.

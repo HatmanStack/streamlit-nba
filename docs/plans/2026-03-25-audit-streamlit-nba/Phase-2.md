@@ -42,11 +42,11 @@ Fix structural and architectural issues: decouple Streamlit caching from busines
   - Replace `get_connection()` context manager usage with direct calls to `_load_nba_data()`.
 
 **Verification Checklist:**
-- [x]`src/database/connection.py` does not import `streamlit`
-- [x]`python -c "from src.database.connection import load_data"` succeeds without Streamlit installed (or mocked)
-- [x]Pages still load data correctly (manual test with `streamlit run app.py` if possible)
-- [x]`pytest` passes
-- [x]`mypy src/` passes
+- [x] `src/database/connection.py` does not import `streamlit`
+- [x] `python -c "from src.database.connection import load_data"` succeeds without Streamlit installed (or mocked)
+- [x] Pages still load data correctly (manual test with `streamlit run app.py` if possible)
+- [x] `pytest` passes
+- [x] `mypy src/` passes
 
 **Testing Instructions:**
 - Update `tests/test_database.py` to remove any Streamlit mocking for `connection.py`.
@@ -84,10 +84,10 @@ refactor(database): decouple Streamlit caching from connection module
   - Replace direct calls to `get_winner_model()` with `_get_model()`.
 
 **Verification Checklist:**
-- [x]`src/ml/model.py` does not import `streamlit`
-- [x]`python -c "from src.ml.model import get_winner_model"` succeeds without Streamlit
-- [x]`pytest` passes
-- [x]`mypy src/` passes
+- [x] `src/ml/model.py` does not import `streamlit`
+- [x] `python -c "from src.ml.model import get_winner_model"` succeeds without Streamlit
+- [x] `pytest` passes
+- [x] `mypy src/` passes
 
 **Testing Instructions:**
 - Update `tests/test_ml.py` to remove any Streamlit mocking that was needed due to the `st.cache_resource` import.
@@ -118,10 +118,10 @@ refactor(ml): decouple Streamlit caching from model module
 - Review callers in pages to ensure they catch the custom exceptions, not bare `Exception`.
 
 **Verification Checklist:**
-- [x]No `except Exception` in `connection.py`
-- [x]All exception catches use specific types
-- [x]`pytest` passes
-- [x]`mypy src/` passes
+- [x] No `except Exception` in `connection.py`
+- [x] All exception catches use specific types
+- [x] `pytest` passes
+- [x] `mypy src/` passes
 
 **Testing Instructions:**
 - Existing tests should cover this. Add a test that verifies a `FileNotFoundError` is raised as `DatabaseConnectionError`.
@@ -156,9 +156,9 @@ fix(database): narrow exception catches to specific types
 - Apply this change consistently across all files.
 
 **Verification Checklist:**
-- [x]No f-strings in any `logger.*()` calls
-- [x]`ruff check src/ tests/` passes
-- [x]`pytest` passes
+- [x] No f-strings in any `logger.*()` calls
+- [x] `ruff check src/ tests/` passes
+- [x] `pytest` passes
 
 **Testing Instructions:** No new tests needed. This is a mechanical replacement.
 
@@ -187,10 +187,10 @@ fix(logging): replace f-string logging with lazy %s formatting
 - Import `TEAM_SIZE` and `STAT_COLUMNS` (or their lengths) from `src/config.py`.
 
 **Verification Checklist:**
-- [x]`analyze_team_stats` raises `ValueError` if player count != 5
-- [x]`analyze_team_stats` raises `ValueError` if any player has wrong stat count
-- [x]Existing tests pass
-- [x]New tests cover the validation
+- [x] `analyze_team_stats` raises `ValueError` if player count != 5
+- [x] `analyze_team_stats` raises `ValueError` if any player has wrong stat count
+- [x] Existing tests pass
+- [x] New tests cover the validation
 
 **Testing Instructions:**
 - Add tests in `tests/test_ml.py`:
@@ -220,9 +220,9 @@ fix(ml): add input shape validation before model prediction
 - Remove the redundant check from `from_preset()` since the Pydantic validator will catch it during construction. Let `from_preset()` simply construct the instance and trust Pydantic validation.
 
 **Verification Checklist:**
-- [x]Only one validation path for preset names
-- [x]`pytest tests/test_models.py` passes
-- [x]Invalid preset names still raise appropriate errors
+- [x] Only one validation path for preset names
+- [x] `pytest tests/test_models.py` passes
+- [x] Invalid preset names still raise appropriate errors
 
 **Testing Instructions:** Existing `DifficultySettings` tests should cover this. Verify they pass.
 
@@ -249,9 +249,9 @@ fix(models): remove duplicate validation in DifficultySettings
 - Fix type hints: change `list[list]` to `list[list[float]]` or more precise types.
 
 **Verification Checklist:**
-- [x]No `del` operations on input data in `create_stats`
-- [x]`ruff check scripts/` passes
-- [x]Function produces same output (manual verification or add a simple test)
+- [x] No `del` operations on input data in `create_stats`
+- [x] `ruff check scripts/` passes
+- [x] Function produces same output (manual verification or add a simple test)
 
 **Testing Instructions:** This is a training script, not part of the test suite. Manual verification that the output is unchanged, or add a simple test comparing old behavior vs new.
 
@@ -280,10 +280,10 @@ fix(scripts): replace destructive del with slicing in create_stats
 - Alternatively, call `setup_logging()` in each entry point (`app.py`, page files) right after `configure_page()`.
 
 **Verification Checklist:**
-- [x]`setup_logging()` is NOT called at module level in `config.py`
-- [x]`setup_logging()` IS called in each entry point
-- [x]`pytest` passes
-- [x]Logging still works when running the app
+- [x] `setup_logging()` is NOT called at module level in `config.py`
+- [x] `setup_logging()` IS called in each entry point
+- [x] `pytest` passes
+- [x] Logging still works when running the app
 
 **Testing Instructions:** Run existing tests. The module-level call removal should not break tests since tests typically configure their own logging.
 

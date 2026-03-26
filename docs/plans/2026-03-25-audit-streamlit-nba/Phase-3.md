@@ -141,7 +141,7 @@ test(utils): add tests for HTML escaping utilities
 - [x] Test verifies input/output shape
 - [x] Test passes
 
-**Testing Instructions:** `pytest tests/test_ml.py::test_load_real_model -v`
+**Testing Instructions:** `pytest tests/test_ml.py::TestLoadRealModel::test_load_real_model -v`
 
 **Commit Message Template:**
 ```text

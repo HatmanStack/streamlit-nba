@@ -5,6 +5,7 @@ from unittest.mock import patch
 import pandas as pd
 
 from src.config import DIFFICULTY_PRESETS
+from src.state.session import get_away_stats, get_home_team_df, init_session_state
 
 
 class TestInitSessionState:
@@ -15,8 +16,6 @@ class TestInitSessionState:
         state: dict = {}
         with patch("src.state.session.st") as mock_st:
             mock_st.session_state = state
-            from src.state.session import init_session_state
-
             init_session_state()
 
         expected_keys = {
@@ -34,8 +33,6 @@ class TestInitSessionState:
         state: dict = {"home_team": ["Player A"]}
         with patch("src.state.session.st") as mock_st:
             mock_st.session_state = state
-            from src.state.session import init_session_state
-
             init_session_state()
 
         assert state["home_team"] == ["Player A"]
@@ -45,8 +42,6 @@ class TestInitSessionState:
         state: dict = {}
         with patch("src.state.session.st") as mock_st:
             mock_st.session_state = state
-            from src.state.session import init_session_state
-
             init_session_state()
 
         assert state["away_stats"] == list(DIFFICULTY_PRESETS["Regular"])
@@ -56,8 +51,6 @@ class TestInitSessionState:
         state: dict = {}
         with patch("src.state.session.st") as mock_st:
             mock_st.session_state = state
-            from src.state.session import init_session_state
-
             init_session_state()
 
         assert isinstance(state["away_team_df"], pd.DataFrame)
@@ -74,8 +67,6 @@ class TestGetAwayStats:
         state: dict = {"away_stats": [100, 200, 300, 400]}
         with patch("src.state.session.st") as mock_st:
             mock_st.session_state = state
-            from src.state.session import get_away_stats
-
             result = get_away_stats()
 
         assert result == [100, 200, 300, 400]
@@ -85,8 +76,24 @@ class TestGetAwayStats:
         state: dict = {"away_stats": "invalid"}
         with patch("src.state.session.st") as mock_st:
             mock_st.session_state = state
-            from src.state.session import get_away_stats
+            result = get_away_stats()
 
+        assert result == list(DIFFICULTY_PRESETS["Regular"])
+
+    def test_returns_defaults_on_none(self) -> None:
+        """Verify returns defaults when away_stats is None."""
+        state: dict = {"away_stats": None}
+        with patch("src.state.session.st") as mock_st:
+            mock_st.session_state = state
+            result = get_away_stats()
+
+        assert result == list(DIFFICULTY_PRESETS["Regular"])
+
+    def test_returns_defaults_on_wrong_length(self) -> None:
+        """Verify returns defaults when away_stats has wrong length."""
+        state: dict = {"away_stats": [1, 2, 3]}
+        with patch("src.state.session.st") as mock_st:
+            mock_st.session_state = state
             result = get_away_stats()
 
         assert result == list(DIFFICULTY_PRESETS["Regular"])
@@ -101,8 +108,6 @@ class TestGetHomeTeamDf:
         state: dict = {"home_team_df": expected_df}
         with patch("src.state.session.st") as mock_st:
             mock_st.session_state = state
-            from src.state.session import get_home_team_df
-
             result = get_home_team_df()
 
         pd.testing.assert_frame_equal(result, expected_df)
@@ -112,8 +117,6 @@ class TestGetHomeTeamDf:
         state: dict = {}
         with patch("src.state.session.st") as mock_st:
             mock_st.session_state = state
-            from src.state.session import get_home_team_df
-
             result = get_home_team_df()
 
         assert isinstance(result, pd.DataFrame)

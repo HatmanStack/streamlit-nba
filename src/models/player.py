@@ -44,7 +44,8 @@ class DifficultySettings(BaseModel):
         """
         preset = DIFFICULTY_PRESETS.get(preset_name)
         if preset is None:
-            # Let Pydantic validation handle the error message
+            # Pass invalid name to constructor; the field_validator on
+            # `name` will raise ValueError with valid preset options.
             return cls(
                 name=preset_name,
                 pts_threshold=0,

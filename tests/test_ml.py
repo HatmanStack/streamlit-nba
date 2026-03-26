@@ -25,9 +25,7 @@ class TestAnalyzeTeamStats:
         # Combined has both teams = 100 values
         assert combined.shape == (1, 100)
 
-    def test_combined_contains_both_teams(
-        self, sample_team_stats: list[list[float]]
-    ) -> None:
+    def test_combined_contains_both_teams(self) -> None:
         """Test that combined array contains both teams' stats."""
         home_stats = [[float(i * 10 + j) for j in range(10)] for i in range(5)]
         away_stats = [[float(50 + i * 10 + j) for j in range(10)] for i in range(5)]

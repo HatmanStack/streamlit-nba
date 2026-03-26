@@ -41,7 +41,7 @@ def load_data() -> pd.DataFrame:
         # Ensure column names match expected Snowflake names (uppercase)
         df.columns = [col.upper() for col in df.columns]
         return df
-    except (FileNotFoundError, pd.errors.ParserError, pd.errors.EmptyDataError) as e:
+    except (pd.errors.ParserError, pd.errors.EmptyDataError) as e:
         logger.error("Failed to load CSV data: %s", e)
         msg = f"Could not load data from {CSV_PATH}: {e}"
         raise DatabaseConnectionError(msg) from e

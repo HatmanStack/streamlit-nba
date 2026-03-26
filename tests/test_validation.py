@@ -52,7 +52,7 @@ class TestRejectsInvalidCharacters:
             "James<script>",
             "James&nbsp;",
             "James@#$%",
-            "James\\nNewline",
+            "James\nNewline",
             "James\x00null",
         ],
     )

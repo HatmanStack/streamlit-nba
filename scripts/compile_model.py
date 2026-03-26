@@ -80,8 +80,8 @@ def create_stats(roster: pd.DataFrame, schedule: pd.DataFrame) -> list[np.ndarra
     Returns:
         List of numpy arrays, one per game with combined team stats
     """
-    home_stats: list[list[list[float]]] = []
-    away_stats: list[list[list[float]]] = []
+    home_stats: list[list[list[str | float]]] = []
+    away_stats: list[list[list[str | float]]] = []
     features: list[np.ndarray] = []
 
     new_roster = roster[FEATURE_COLS]
