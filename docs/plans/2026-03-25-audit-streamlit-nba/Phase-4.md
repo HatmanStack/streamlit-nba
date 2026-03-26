@@ -157,7 +157,7 @@ refactor(types): tighten type annotations, remove unnecessary Any usage
 - This ensures CI fails if coverage drops, not just locally.
 
 **Verification Checklist:**
-- [ ] CI pytest command includes `--cov-fail-under=70`
+- [x] CI pytest command includes `--cov-fail-under=70`
 
 **Testing Instructions:** Verify the CI workflow file has the correct command.
 
