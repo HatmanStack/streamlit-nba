@@ -32,7 +32,7 @@ def init_session_state() -> None:
     for key, default_value in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = default_value
-            logger.debug(f"Initialized session state: {key}")
+            logger.debug("Initialized session state: %s", key)
 
 
 def get_away_stats() -> list[int]:

@@ -119,11 +119,11 @@ def get_away_team_by_stats(
 
             results = df.loc[list(selected_indices)]
             if len(results) == 5:
-                logger.info(f"Got away team on attempt {attempt + 1}")
+                logger.info("Got away team on attempt %d", attempt + 1)
                 return results
 
         except ValueError as e:
-            logger.debug(f"Attempt {attempt + 1} failed: {e}")
+            logger.debug("Attempt %d failed: %s", attempt + 1, e)
             continue
 
     raise QueryExecutionError(

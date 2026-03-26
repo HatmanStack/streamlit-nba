@@ -32,16 +32,16 @@ def get_winner_model(model_path: str | Path = DEFAULT_MODEL_PATH) -> Model:
     """
     path = Path(model_path)
     if not path.exists():
-        logger.error(f"Model file not found: {path}")
+        logger.error("Model file not found: %s", path)
         raise ModelLoadError(f"Model file not found: {path}")
 
     try:
-        logger.info(f"Loading model from {path}")
+        logger.info("Loading model from %s", path)
         model = load_model(str(path))
         logger.info("Model loaded successfully")
         return model
     except Exception as e:
-        logger.error(f"Failed to load model: {e}")
+        logger.error("Failed to load model: %s", e)
         raise ModelLoadError(f"Failed to load model: {e}") from e
 
 
@@ -71,7 +71,7 @@ def predict_winner(combined_stats: np.ndarray) -> tuple[float, int]:
     probability = float(sigmoid_output[0][0])
     prediction = int(np.round(probability))
 
-    logger.info(f"Prediction: probability={probability:.4f}, winner={prediction}")
+    logger.info("Prediction: probability=%.4f, winner=%d", probability, prediction)
     return probability, prediction
 
 

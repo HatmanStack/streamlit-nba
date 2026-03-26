@@ -178,17 +178,17 @@ if teams_good and not st.session_state.away_team_df.empty:
             index=["Home Team", "Away Team"],
         )
 
-        logger.info(f"Prediction: {probability:.4f}")
+        logger.info("Prediction: %.4f", probability)
 
     except ModelLoadError as e:
         st.error("Could not load prediction model. Please contact support.")
-        logger.error(f"Model load error: {e}")
+        logger.error("Model load error: %s", e)
         teams_good = False
         winner_label = ""
         box_score = pd.DataFrame()
     except ValueError as e:
         st.error("Error processing team stats. Please try again.")
-        logger.error(f"Stats processing error: {e}")
+        logger.error("Stats processing error: %s", e)
         teams_good = False
         winner_label = ""
         box_score = pd.DataFrame()
