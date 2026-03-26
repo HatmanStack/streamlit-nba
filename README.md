@@ -16,9 +16,9 @@ Play the game [here](https://hatman-nba-fantasy-game.hf.space).
 
 ## 🚀 Features
 
-- **Multi-page Interface**: Organized navigation between the home page, team builder, and game simulator.
+- **Two-Page Interface**: Streamlit app with a team builder and game prediction simulator, plus a landing page.
 - **Advanced Team Builder**:
-    - Search for players from a comprehensive database of historical NBA stats.
+    - Search for players from a dataset of historical NBA stats (local CSV).
     - Input validation for secure and accurate player searches.
     - Build a 5-player roster with real-time preview.
 - **Dynamic Opponents**: Choose from multiple difficulty levels to generate challenging computer teams.
