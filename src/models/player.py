@@ -42,12 +42,17 @@ class DifficultySettings(BaseModel):
         Raises:
             ValueError: If preset_name is not valid
         """
-        if preset_name not in DIFFICULTY_PRESETS:
-            raise ValueError(
-                f"Unknown difficulty preset: {preset_name}. "
-                f"Valid options: {', '.join(sorted(DIFFICULTY_PRESETS.keys()))}"
+        preset = DIFFICULTY_PRESETS.get(preset_name)
+        if preset is None:
+            # Let Pydantic validation handle the error message
+            return cls(
+                name=preset_name,
+                pts_threshold=0,
+                reb_threshold=0,
+                ast_threshold=0,
+                stl_threshold=0,
             )
-        pts, reb, ast, stl = DIFFICULTY_PRESETS[preset_name]
+        pts, reb, ast, stl = preset
         return cls(
             name=preset_name,
             pts_threshold=pts,
