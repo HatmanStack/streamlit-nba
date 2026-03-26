@@ -91,10 +91,8 @@ def setup_logging(level: int = logging.INFO) -> logging.Logger:
     return logger
 
 
-# Module-level logger instance
-logger: Final[logging.Logger] = setup_logging()
-
 
 def configure_page() -> None:
-    """Configure Streamlit page settings."""
+    """Configure Streamlit page settings and logging."""
+    setup_logging()
     st.set_page_config(layout="wide")
