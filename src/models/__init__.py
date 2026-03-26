@@ -1,5 +1,5 @@
 """Pydantic models for data validation."""
 
-from src.models.player import DifficultySettings, PlayerStats
+from src.models.player import DifficultySettings
 
-__all__ = ["DifficultySettings", "PlayerStats"]
+__all__ = ["DifficultySettings"]
