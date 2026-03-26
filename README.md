@@ -93,11 +93,16 @@ mypy src/
 ```
 
 ### Training the Model
-The project includes a comprehensive training pipeline to rebuild the model from scratch using the 2018 NBA season results:
+The training script rebuilds the model from scratch using 2018 NBA season results. It requires two input files in the project root:
+
+- `player_stats.txt` -- player roster and statistics
+- `schedule.txt` -- game schedule with scores
+
+Run the training:
 ```bash
 python scripts/compile_model.py
 ```
-This script performs an automated search for the best architecture and hyperparameters (optimizers, initializers, etc.) before saving the final `winner.keras` model.
+The script uses `RandomizedSearchCV` to search for optimal hyperparameters and saves the result as `winner.keras`, which is required at runtime for game predictions.
 
 ## 📄 License
 
