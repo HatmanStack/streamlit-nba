@@ -74,7 +74,6 @@ select = [
 ignore = [
     "S101",   # assert used (ok in tests)
     "PLR0913", # too many arguments
-    "S608",   # SQL injection false positive (using parameterized queries)
     "S110",   # try-except-pass ok for connection cleanup
     "SIM105", # prefer explicit try-except over contextlib.suppress
     "PLR2004", # magic numbers ok in game logic

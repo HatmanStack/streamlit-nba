@@ -4,30 +4,6 @@ import re
 
 from pydantic import BaseModel, Field, field_validator
 
-# Patterns that indicate SQL injection attempts
-SQL_INJECTION_PATTERNS: list[str] = [
-    r'[";]',  # Double quotes and semicolons (apostrophes allowed for names like O'Neal)
-    r"--",  # SQL comment
-    r"/\*",  # Block comment start
-    r"\*/",  # Block comment end
-    r"\bUNION\b",  # UNION keyword
-    r"\bSELECT\b",  # SELECT keyword
-    r"\bINSERT\b",  # INSERT keyword
-    r"\bUPDATE\b",  # UPDATE keyword
-    r"\bDELETE\b",  # DELETE keyword
-    r"\bDROP\b",  # DROP keyword
-    r"\bEXEC\b",  # EXEC keyword
-    r"\bOR\s+\d+=\d+",  # OR 1=1 pattern
-    r"\bAND\s+\d+=\d+",  # AND 1=1 pattern
-    r"'\s*OR\s",  # ' OR pattern (SQL injection)
-    r"'\s*AND\s",  # ' AND pattern (SQL injection)
-]
-
-# Compiled regex for efficiency
-SQL_INJECTION_REGEX = re.compile(
-    "|".join(SQL_INJECTION_PATTERNS), re.IGNORECASE
-)
-
 
 class PlayerSearchInput(BaseModel):
     """Validated player search input."""
@@ -41,27 +17,6 @@ class PlayerSearchInput(BaseModel):
 
     @field_validator("search_term")
     @classmethod
-    def validate_no_sql_injection(cls, v: str) -> str:
-        """Reject inputs containing SQL injection patterns.
-
-        Args:
-            v: Input search term
-
-        Returns:
-            Validated search term
-
-        Raises:
-            ValueError: If SQL injection pattern detected
-        """
-        if SQL_INJECTION_REGEX.search(v):
-            raise ValueError(
-                "Invalid characters in search term. "
-                "Please use only letters, numbers, spaces, and hyphens."
-            )
-        return v.strip()
-
-    @field_validator("search_term")
-    @classmethod
     def validate_reasonable_characters(cls, v: str) -> str:
         """Ensure search term contains only reasonable characters.
 
@@ -69,11 +24,12 @@ class PlayerSearchInput(BaseModel):
             v: Input search term
 
         Returns:
-            Validated search term
+            Validated and stripped search term
 
         Raises:
             ValueError: If invalid characters found
         """
+        v = v.strip()
         # Allow letters, numbers, spaces, hyphens, periods, and apostrophes
         # (e.g., "O'Neal", "J.R. Smith")
         if not re.match(r"^[a-zA-Z0-9\s\-.']+$", v):
