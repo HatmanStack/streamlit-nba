@@ -84,7 +84,6 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "ARG001", "ARG002", "PLR2004", "PLC0415"]
-"debug_streamlit.py" = ["E402"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
