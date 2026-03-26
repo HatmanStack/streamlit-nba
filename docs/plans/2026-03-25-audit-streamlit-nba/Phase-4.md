@@ -125,10 +125,10 @@ ci(hooks): add pre-commit config with ruff and mypy hooks
 - Review `src/models/player.py` for any remaining `Any` imports that are no longer needed after `PlayerStats` removal.
 
 **Verification Checklist:**
-- [ ] No `tuple[Any, ...]` in `queries.py`
-- [ ] No bare `list[list]` in `compile_model.py`
-- [ ] `mypy src/` passes
-- [ ] `pytest` passes
+- [x] No `tuple[Any, ...]` in `queries.py`
+- [x] No bare `list[list]` in `compile_model.py`
+- [x] `mypy src/` passes
+- [x] `pytest` passes
 
 **Testing Instructions:** Run `mypy src/` and verify no new errors. Run existing tests.
 
