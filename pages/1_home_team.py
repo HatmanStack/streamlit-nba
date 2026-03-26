@@ -5,7 +5,7 @@ import logging
 import pandas as pd
 import streamlit as st
 
-from src.config import DIFFICULTY_PRESETS, PLAYER_COLUMNS
+from src.config import DIFFICULTY_PRESETS, PLAYER_COLUMNS, configure_page
 from src.database.connection import (
     DatabaseConnectionError,
     QueryExecutionError,
@@ -18,13 +18,7 @@ from src.validation.inputs import validate_search_term
 
 logger = logging.getLogger("streamlit_nba")
 
-
-def on_page_load() -> None:
-    """Configure page settings."""
-    st.set_page_config(layout="wide")
-
-
-on_page_load()
+configure_page()
 
 # Initialize session state before any access
 init_session_state()

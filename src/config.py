@@ -3,6 +3,8 @@
 import logging
 from typing import Final
 
+import streamlit as st
+
 # Database column names for player data
 PLAYER_COLUMNS: Final[list[str]] = [
     "FULL_NAME",
@@ -91,3 +93,8 @@ def setup_logging(level: int = logging.INFO) -> logging.Logger:
 
 # Module-level logger instance
 logger: Final[logging.Logger] = setup_logging()
+
+
+def configure_page() -> None:
+    """Configure Streamlit page settings."""
+    st.set_page_config(layout="wide")

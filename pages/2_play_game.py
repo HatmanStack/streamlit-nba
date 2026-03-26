@@ -14,6 +14,7 @@ from src.config import (
     STAT_COLUMNS,
     TEAM_SIZE,
     WINNER_SCORE_RANGE,
+    configure_page,
 )
 from src.database.connection import (
     DatabaseConnectionError,
@@ -27,13 +28,7 @@ from src.utils.html import safe_heading
 
 logger = logging.getLogger("streamlit_nba")
 
-
-def on_page_load() -> None:
-    """Configure page settings."""
-    st.set_page_config(layout="wide")
-
-
-on_page_load()
+configure_page()
 
 # Initialize session state BEFORE any access
 init_session_state()

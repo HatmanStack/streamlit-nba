@@ -1,16 +1,9 @@
 """NBA Team Builder Application - Entry Point."""
 
-import streamlit as st
-
+from src.config import configure_page
 from src.utils.html import safe_heading, safe_paragraph
 
-
-def on_page_load() -> None:
-    """Configure page settings."""
-    st.set_page_config(layout="wide")
-
-
-on_page_load()
+configure_page()
 
 safe_heading("NBA", level=1, color="steelblue")
 

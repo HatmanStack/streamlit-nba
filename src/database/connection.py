@@ -69,5 +69,3 @@ def get_connection() -> Generator[pd.DataFrame, None, None]:
     except Exception as e:
         logger.error(f"Unexpected error accessing data: {e}")
         raise DatabaseConnectionError(f"Data access failed: {e}") from e
-    finally:
-        pass
