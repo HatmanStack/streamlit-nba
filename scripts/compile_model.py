@@ -82,8 +82,8 @@ def create_stats(
     Returns:
         List of numpy arrays, one per game with combined team stats
     """
-    home_stats: list[list] = []
-    away_stats: list[list] = []
+    home_stats: list[list[list[float]]] = []
+    away_stats: list[list[list[float]]] = []
     features: list[np.ndarray] = []
 
     new_roster = roster[FEATURE_COLS]
@@ -99,13 +99,11 @@ def create_stats(
     for i in range(len(home_stats)):
         arr: list[float] = []
 
-        for j in range(len(home_stats[i])):
-            del home_stats[i][j][0]  # Remove team name
-            arr.extend(home_stats[i][j])
+        for row in home_stats[i]:
+            arr.extend(row[1:])  # Skip team name column
 
-        for j in range(len(away_stats[i])):
-            del away_stats[i][j][0]  # Remove team name
-            arr.extend(away_stats[i][j])
+        for row in away_stats[i]:
+            arr.extend(row[1:])  # Skip team name column
 
         # Handle NaN values
         features.append(np.nan_to_num(np.array(arr), copy=False))
