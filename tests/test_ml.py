@@ -160,6 +160,22 @@ class TestPredictWinner:
         mock_model.predict.assert_called_once_with(stats, verbose=0)
 
 
+class TestLoadRealModel:
+    """Integration test loading the real model file."""
+
+    def test_load_real_model(self) -> None:
+        """Verify real winner.keras loads with expected input/output shape."""
+        from src.ml.model import get_winner_model
+
+        model = get_winner_model()
+
+        assert model is not None
+        # Model expects 100 features (5 players x 10 stats x 2 teams)
+        assert model.input_shape == (None, 100)
+        # Binary classification: single sigmoid output
+        assert model.output_shape == (None, 1)
+
+
 class TestGetWinnerModel:
     """Tests for get_winner_model loading."""
 
