@@ -1,7 +1,6 @@
 """Local data queries using pandas on loaded CSV data."""
 
 import logging
-from typing import Any
 
 import pandas as pd
 
@@ -29,24 +28,6 @@ def search_player_by_name(df: pd.DataFrame, name: str) -> list[tuple[str]]:
     )
     results = df[mask]["FULL_NAME"].unique().tolist()
     return [(player_name,) for player_name in results]
-
-
-def get_player_by_full_name(
-    df: pd.DataFrame, full_name: str
-) -> tuple[Any, ...] | None:
-    """Get a single player's full record by exact name match.
-
-    Args:
-        df: Player DataFrame
-        full_name: Exact full name of player
-
-    Returns:
-        Player data tuple or None if not found
-    """
-    result = df[df["FULL_NAME"] == full_name]
-    if result.empty:
-        return None
-    return tuple(result.iloc[0].values)
 
 
 def get_players_by_full_names(

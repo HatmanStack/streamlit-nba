@@ -7,7 +7,6 @@ from src.database.connection import (
 )
 from src.database.queries import (
     get_away_team_by_stats,
-    get_player_by_full_name,
     get_players_by_full_names,
     search_player_by_name,
 )
@@ -17,7 +16,6 @@ __all__ = [
     "QueryExecutionError",
     "get_away_team_by_stats",
     "get_connection",
-    "get_player_by_full_name",
     "get_players_by_full_names",
     "search_player_by_name",
 ]
