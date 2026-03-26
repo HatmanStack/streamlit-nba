@@ -165,3 +165,13 @@ class TestGetAwayTeamByStats:
 
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 5
+
+
+class TestCsvColumnValidation:
+    """Integration tests validating CSV data matches config."""
+
+    def test_csv_columns_match_config(self) -> None:
+        """Verify that actual CSV columns match PLAYER_COLUMNS in config."""
+        df = load_data()
+        assert not df.empty, "CSV file should not be empty"
+        assert list(df.columns) == PLAYER_COLUMNS
