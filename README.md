@@ -35,18 +35,24 @@ Play the game [here](https://hatman-nba-fantasy-game.hf.space).
 ## 📋 Project Structure
 
 ```text
-├── app.py              # Main entry point
-├── pages/              # Streamlit page modules
-├── src/                # Core application logic
-│   ├── database/       # Data access and queries
-│   ├── ml/             # Model loading and prediction
-│   ├── models/         # Data models and schemas
-│   ├── state/          # Session state management
-│   ├── utils/          # UI and helper utilities
-│   └── validation/     # Input validation logic
-├── tests/              # Comprehensive test suite
-├── scripts/            # Training and utility scripts
-└── winner.keras        # Pre-trained prediction model
+├── app.py                    # Main entry point
+├── pages/                    # Streamlit page modules
+├── src/                      # Core application logic
+│   ├── config.py             # Constants, presets, logging setup
+│   ├── database/             # CSV data loading and queries
+│   ├── ml/                   # Model loading and prediction
+│   ├── models/               # Data models and schemas
+│   ├── state/                # Session state management
+│   ├── utils/                # UI and helper utilities
+│   └── validation/           # Input validation logic
+├── tests/                    # Test suite
+├── scripts/                  # Training and utility scripts
+├── snowflake_nba.csv         # Player stats dataset (runtime data source)
+├── winner.keras              # Pre-trained prediction model
+├── .github/workflows/        # CI and release workflows
+├── .pre-commit-config.yaml   # Pre-commit hook configuration
+├── .streamlit/config.toml    # Streamlit theme/settings
+└── pyproject.toml            # Project metadata and dependencies
 ```
 
 ## ⚙️ Usage
