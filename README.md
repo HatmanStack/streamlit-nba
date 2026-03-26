@@ -104,6 +104,12 @@ python scripts/compile_model.py
 ```
 The script uses `RandomizedSearchCV` to search for optimal hyperparameters and saves the result as `winner.keras`, which is required at runtime for game predictions.
 
+## 📁 Data Files and Configuration
+
+- **`snowflake_nba.csv`**: Player statistics dataset loaded at runtime by `src/database/connection.py`. Path is resolved relative to the module location (project root).
+- **`winner.keras`**: Pre-trained Keras model loaded by `src/ml/model.py`. Path is resolved relative to the module location (project root).
+- **`src/config.py`**: Central configuration for column names, team size, difficulty presets, score ranges, and logging setup.
+
 ## 📄 License
 
 This repository is licensed under the Apache License 2.0.
