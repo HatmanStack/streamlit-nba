@@ -29,17 +29,54 @@ class TestAnalyzeTeamStats:
         self, sample_team_stats: list[list[float]]
     ) -> None:
         """Test that combined array contains both teams' stats."""
-        home_stats = [[1.0, 2.0], [3.0, 4.0]]  # 2 players, 2 stats each
-        away_stats = [[5.0, 6.0], [7.0, 8.0]]
+        home_stats = [[float(i * 10 + j) for j in range(10)] for i in range(5)]
+        away_stats = [[float(50 + i * 10 + j) for j in range(10)] for i in range(5)]
 
         _home_array, _away_array, combined = analyze_team_stats(
             home_stats, away_stats
         )
 
-        # Home should be first 4 values, away next 4
-        np.testing.assert_array_equal(
-            combined[0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
-        )
+        # Combined should have 100 values: 50 home + 50 away
+        assert combined.shape == (1, 100)
+        # First value should be home[0][0], last should be away[4][9]
+        assert combined[0][0] == 0.0
+        assert combined[0][50] == 50.0
+
+
+class TestAnalyzeTeamStatsValidation:
+    """Tests for input shape validation in analyze_team_stats."""
+
+    def test_wrong_number_of_home_players_raises_error(self) -> None:
+        """Test that wrong number of home players raises ValueError."""
+        home_stats = [[1.0] * 10 for _ in range(4)]  # 4 players instead of 5
+        away_stats = [[1.0] * 10 for _ in range(5)]
+
+        with pytest.raises(ValueError, match="Expected 5 players"):
+            analyze_team_stats(home_stats, away_stats)
+
+    def test_wrong_number_of_away_players_raises_error(self) -> None:
+        """Test that wrong number of away players raises ValueError."""
+        home_stats = [[1.0] * 10 for _ in range(5)]
+        away_stats = [[1.0] * 10 for _ in range(6)]  # 6 players instead of 5
+
+        with pytest.raises(ValueError, match="Expected 5 players"):
+            analyze_team_stats(home_stats, away_stats)
+
+    def test_wrong_stat_count_raises_error(self) -> None:
+        """Test that wrong number of stats per player raises ValueError."""
+        home_stats = [[1.0] * 10 for _ in range(5)]
+        away_stats = [[1.0] * 10 for _ in range(4)] + [[1.0] * 9]  # player with 9 stats
+
+        with pytest.raises(ValueError, match="stats, expected 10"):
+            analyze_team_stats(home_stats, away_stats)
+
+    def test_home_player_wrong_stat_count_raises_error(self) -> None:
+        """Test that home player with wrong stat count raises ValueError."""
+        home_stats = [[1.0] * 9] + [[1.0] * 10 for _ in range(4)]  # first player has 9
+        away_stats = [[1.0] * 10 for _ in range(5)]
+
+        with pytest.raises(ValueError, match="stats, expected 10"):
+            analyze_team_stats(home_stats, away_stats)
 
 
 class TestPredictWinner:

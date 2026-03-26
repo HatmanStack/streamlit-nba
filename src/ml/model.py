@@ -6,6 +6,8 @@ from pathlib import Path
 import numpy as np
 from tensorflow.keras.models import Model, load_model
 
+from src.config import STAT_COLUMNS, TEAM_SIZE
+
 logger = logging.getLogger("streamlit_nba")
 
 # Default model path relative to the project root
@@ -93,6 +95,28 @@ def analyze_team_stats(
             - away_array: Shape (1, 50) - away team flattened stats
             - combined_array: Shape (1, 100) - both teams for prediction
     """
+    expected_stats = len(STAT_COLUMNS)
+
+    if len(home_stats) != TEAM_SIZE:
+        raise ValueError(
+            f"Expected {TEAM_SIZE} players for home team, got {len(home_stats)}"
+        )
+    if len(away_stats) != TEAM_SIZE:
+        raise ValueError(
+            f"Expected {TEAM_SIZE} players for away team, got {len(away_stats)}"
+        )
+
+    for i, player in enumerate(home_stats):
+        if len(player) != expected_stats:
+            raise ValueError(
+                f"Home player {i} has {len(player)} stats, expected {expected_stats}"
+            )
+    for i, player in enumerate(away_stats):
+        if len(player) != expected_stats:
+            raise ValueError(
+                f"Away player {i} has {len(player)} stats, expected {expected_stats}"
+            )
+
     home_flat: list[float] = []
     away_flat: list[float] = []
 
