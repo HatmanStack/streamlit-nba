@@ -185,9 +185,9 @@ ci(coverage): enforce 70% coverage threshold in CI
 - Run `ruff check src/ tests/` to verify no new violations surface.
 
 **Verification Checklist:**
-- [ ] `S608` removed from ruff ignores
-- [ ] `S110` removed if no longer needed
-- [ ] `ruff check src/ tests/` passes with the updated config
+- [x] `S608` removed from ruff ignores (already removed in Phase 1)
+- [x] `S110` removed if no longer needed
+- [x] `ruff check src/ tests/` passes with the updated config
 
 **Testing Instructions:** `ruff check src/ tests/`
 
