@@ -1,1 +1,29 @@
-/venv
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+
+# Coverage
+.coverage
+htmlcov/
+
+# Type checking / linting caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Packaging
+*.egg-info/
+
+# uv
+uv.lock
+
+# TensorFlow SavedModel directory (unused; winner.keras is tracked)
+winner_model/
+
+# Debug artifacts
+debug_streamlit.py
