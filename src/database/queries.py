@@ -30,9 +30,7 @@ def search_player_by_name(df: pd.DataFrame, name: str) -> list[tuple[str]]:
     return [(player_name,) for player_name in results]
 
 
-def get_players_by_full_names(
-    df: pd.DataFrame, names: list[str]
-) -> pd.DataFrame:
+def get_players_by_full_names(df: pd.DataFrame, names: list[str]) -> pd.DataFrame:
     """Get multiple players' records in a single batch query.
 
     Args:

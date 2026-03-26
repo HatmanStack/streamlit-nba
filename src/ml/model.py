@@ -64,9 +64,7 @@ def predict_winner(combined_stats: np.ndarray) -> tuple[float, int]:
         ValueError: If input shape is invalid
     """
     if combined_stats.shape != (1, 100):
-        raise ValueError(
-            f"Expected input shape (1, 100), got {combined_stats.shape}"
-        )
+        raise ValueError(f"Expected input shape (1, 100), got {combined_stats.shape}")
 
     model = get_winner_model()
     sigmoid_output = model.predict(combined_stats, verbose=0)

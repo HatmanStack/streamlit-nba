@@ -47,7 +47,9 @@ class TestLoadData:
     @patch("src.database.connection.pd.read_csv")
     @patch("src.database.connection.CSV_PATH")
     def test_load_data_parser_error_raises_connection_error(
-        self, mock_path, mock_read_csv  # type: ignore[no-untyped-def]
+        self,
+        mock_path,
+        mock_read_csv,  # type: ignore[no-untyped-def]
     ) -> None:
         """Test that CSV parse errors raise DatabaseConnectionError."""
         mock_path.exists.return_value = True
@@ -120,10 +122,12 @@ class TestGetAwayTeamByStats:
     def test_max_attempts_raises_error(self) -> None:
         """Test that max_attempts limit works when population is too small."""
         # Create a DF with only 2 players
-        df = pd.DataFrame([
-            {"FULL_NAME": "P1", "PTS": 1001, "REB": 501, "AST": 301, "STL": 101},
-            {"FULL_NAME": "P2", "PTS": 1001, "REB": 501, "AST": 301, "STL": 101},
-        ])
+        df = pd.DataFrame(
+            [
+                {"FULL_NAME": "P1", "PTS": 1001, "REB": 501, "AST": 301, "STL": 101},
+                {"FULL_NAME": "P2", "PTS": 1001, "REB": 501, "AST": 301, "STL": 101},
+            ]
+        )
         # Add missing columns to avoid errors if needed, though queries only use these
         for col in PLAYER_COLUMNS:
             if col not in df.columns:
@@ -146,10 +150,15 @@ class TestGetAwayTeamByStats:
         # Create a DF with 10 players meeting criteria
         data = []
         for i in range(10):
-            data.append({
-                "FULL_NAME": f"Player{i}",
-                "PTS": 2000, "REB": 1000, "AST": 500, "STL": 200
-            })
+            data.append(
+                {
+                    "FULL_NAME": f"Player{i}",
+                    "PTS": 2000,
+                    "REB": 1000,
+                    "AST": 500,
+                    "STL": 200,
+                }
+            )
         df = pd.DataFrame(data)
         for col in PLAYER_COLUMNS:
             if col not in df.columns:

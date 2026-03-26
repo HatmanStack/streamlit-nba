@@ -25,6 +25,7 @@ configure_page()
 def _load_nba_data() -> pd.DataFrame:
     return load_data()
 
+
 # Initialize session state before any access
 init_session_state()
 
@@ -53,7 +54,9 @@ def find_player(search_term: str) -> list[str]:
     # Validate input
     validated_term = validate_search_term(search_term)
     if validated_term is None:
-        st.warning("Invalid search term. Please use only letters, numbers, and basic punctuation.")
+        st.warning(
+            "Invalid search term. Please use only letters, numbers, and basic punctuation."
+        )
         return []
 
     try:
@@ -104,7 +107,9 @@ home_team_df = find_home_team()
 
 # Combine search results with current team and current unsaved selections
 # This ensures that selections don't disappear when the search term changes
-current_team_names = home_team_df["FULL_NAME"].tolist() if not home_team_df.empty else []
+current_team_names = (
+    home_team_df["FULL_NAME"].tolist() if not home_team_df.empty else []
+)
 current_selections = st.session_state.get("player_selector", [])
 
 # Merge all into options list, maintaining uniqueness
@@ -125,7 +130,9 @@ def save_state() -> None:
 
 col1, col2 = st.columns([7, 1])
 with col1:
-    default_selection = home_team_df["FULL_NAME"].tolist() if not home_team_df.empty else []
+    default_selection = (
+        home_team_df["FULL_NAME"].tolist() if not home_team_df.empty else []
+    )
     player_selected = st.multiselect(
         "Search Results:",
         player_search,

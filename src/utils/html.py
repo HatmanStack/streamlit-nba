@@ -64,7 +64,6 @@ def safe_paragraph(
     safe_align = escape_html(align)
 
     st.markdown(
-        f"<p style='text-align: {safe_align}; color: {safe_color};'>"
-        f"{safe_text}</p>",
+        f"<p style='text-align: {safe_align}; color: {safe_color};'>{safe_text}</p>",
         unsafe_allow_html=True,
     )

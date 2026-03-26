@@ -91,7 +91,6 @@ def setup_logging(level: int = logging.INFO) -> logging.Logger:
     return logger
 
 
-
 def configure_page() -> None:
     """Configure Streamlit page settings and logging."""
     setup_logging()

@@ -45,6 +45,7 @@ def _load_nba_data() -> pd.DataFrame:
 def _get_model():  # type: ignore[no-untyped-def]
     return get_winner_model()
 
+
 # Initialize session state BEFORE any access
 init_session_state()
 
@@ -135,7 +136,10 @@ if home_team_df.empty or home_team_df.shape[0] != TEAM_SIZE:
     box_score = pd.DataFrame()
 else:
     # Only generate away team if we don't have one or it's empty
-    if st.session_state.get("away_team_df") is None or st.session_state.away_team_df.empty:
+    if (
+        st.session_state.get("away_team_df") is None
+        or st.session_state.away_team_df.empty
+    ):
         st.session_state.away_team_df = find_away_team(stats)
 
     away_data = st.session_state.away_team_df
@@ -207,9 +211,11 @@ if teams_good and winner_label:
 safe_heading("Away Team", level=1, color="steelblue")
 st.dataframe(st.session_state.away_team_df)
 
+
 def play_new_team() -> None:
     """Clear cached away team and rerun."""
     logger.info("New Team requested")
     st.session_state.away_team_df = pd.DataFrame()
+
 
 st.button("Play New Team", on_click=play_new_team)

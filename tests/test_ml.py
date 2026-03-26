@@ -32,9 +32,7 @@ class TestAnalyzeTeamStats:
         home_stats = [[float(i * 10 + j) for j in range(10)] for i in range(5)]
         away_stats = [[float(50 + i * 10 + j) for j in range(10)] for i in range(5)]
 
-        _home_array, _away_array, combined = analyze_team_stats(
-            home_stats, away_stats
-        )
+        _home_array, _away_array, combined = analyze_team_stats(home_stats, away_stats)
 
         # Combined should have 100 values: 50 home + 50 away
         assert combined.shape == (1, 100)
@@ -100,9 +98,7 @@ class TestPredictWinner:
         assert prediction in (0, 1)
 
     @patch("src.ml.model.get_winner_model")
-    def test_high_probability_predicts_win(
-        self, mock_get_model: MagicMock
-    ) -> None:
+    def test_high_probability_predicts_win(self, mock_get_model: MagicMock) -> None:
         """Test that high probability (>0.5) predicts home win (1)."""
         mock_model = MagicMock()
         mock_model.predict.return_value = np.array([[0.8]])
@@ -115,9 +111,7 @@ class TestPredictWinner:
         assert prediction == 1
 
     @patch("src.ml.model.get_winner_model")
-    def test_low_probability_predicts_loss(
-        self, mock_get_model: MagicMock
-    ) -> None:
+    def test_low_probability_predicts_loss(self, mock_get_model: MagicMock) -> None:
         """Test that low probability (<0.5) predicts home loss (0)."""
         mock_model = MagicMock()
         mock_model.predict.return_value = np.array([[0.3]])
@@ -130,9 +124,7 @@ class TestPredictWinner:
         assert prediction == 0
 
     @patch("src.ml.model.get_winner_model")
-    def test_invalid_shape_raises_error(
-        self, mock_get_model: MagicMock
-    ) -> None:
+    def test_invalid_shape_raises_error(self, mock_get_model: MagicMock) -> None:
         """Test that invalid input shape raises ValueError."""
         mock_model = MagicMock()
         mock_get_model.return_value = mock_model
@@ -146,9 +138,7 @@ class TestPredictWinner:
         assert "Expected input shape (1, 100)" in str(exc_info.value)
 
     @patch("src.ml.model.get_winner_model")
-    def test_model_called_with_verbose_zero(
-        self, mock_get_model: MagicMock
-    ) -> None:
+    def test_model_called_with_verbose_zero(self, mock_get_model: MagicMock) -> None:
         """Test that model.predict is called with verbose=0."""
         mock_model = MagicMock()
         mock_model.predict.return_value = np.array([[0.5]])

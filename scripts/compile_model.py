@@ -70,9 +70,7 @@ EPOCHS: list[int] = [500, 1000, 1500]
 BATCH_SIZES: list[int] = [50, 100, 200]
 
 
-def create_stats(
-    roster: pd.DataFrame, schedule: pd.DataFrame
-) -> list[np.ndarray]:
+def create_stats(roster: pd.DataFrame, schedule: pd.DataFrame) -> list[np.ndarray]:
     """Create feature arrays from roster and schedule data.
 
     Args:

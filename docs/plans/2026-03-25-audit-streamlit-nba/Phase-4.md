@@ -92,9 +92,9 @@ ci(deps): consolidate to pyproject.toml, remove requirements files
 - Note: Use the latest stable versions of ruff and mypy that are compatible. Check PyPI for current versions.
 
 **Verification Checklist:**
-- [ ] `.pre-commit-config.yaml` exists at project root
-- [ ] `pre-commit` is in dev dependencies
-- [ ] `uvx pre-commit run --all-files` passes
+- [x] `.pre-commit-config.yaml` exists at project root
+- [x] `pre-commit` is in dev dependencies
+- [x] `uvx pre-commit run --all-files` passes
 
 **Testing Instructions:** Run `uvx pre-commit run --all-files` and verify all hooks pass.
 

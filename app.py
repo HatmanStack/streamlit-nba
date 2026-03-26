@@ -12,5 +12,3 @@ safe_paragraph(
     "career stats to compete with a Computer",
     color="white",
 )
-
-
