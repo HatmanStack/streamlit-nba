@@ -60,18 +60,16 @@ Play the game [here](https://hatman-nba-fantasy-game.hf.space).
 ### Quick Start with uv (Recommended)
 
 ```bash
-# Install dependencies and run the app
-uv run streamlit run app.py
+# Install the project and run the app
+uv pip install -e .
+streamlit run app.py
 ```
 
-### Standard Installation
+### Development Setup
 
 ```bash
-# Install requirements
-pip install -r requirements.txt
-
-# Run the application
-streamlit run app.py
+# Install with dev dependencies (testing, linting, type checking)
+uv pip install -e ".[dev]"
 ```
 
 ## 🧪 Development
@@ -88,10 +86,10 @@ pytest --cov=src
 ### Linting and Type Checking
 ```bash
 # Run Ruff for linting and formatting
-ruff check .
+ruff check src/ tests/
 
 # Run Mypy for static type checking
-mypy .
+mypy src/
 ```
 
 ### Training the Model
