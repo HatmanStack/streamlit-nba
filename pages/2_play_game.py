@@ -22,7 +22,12 @@ from src.database.connection import (
     load_data,
 )
 from src.database.queries import get_away_team_by_stats
-from src.ml.model import ModelLoadError, analyze_team_stats, predict_winner
+from src.ml.model import (
+    ModelLoadError,
+    analyze_team_stats,
+    get_winner_model,
+    predict_winner,
+)
 from src.state.session import get_away_stats, get_home_team_df, init_session_state
 from src.utils.html import safe_heading
 
@@ -34,6 +39,11 @@ configure_page()
 @st.cache_data
 def _load_nba_data() -> pd.DataFrame:
     return load_data()
+
+
+@st.cache_resource
+def _get_model():  # type: ignore[no-untyped-def]
+    return get_winner_model()
 
 # Initialize session state BEFORE any access
 init_session_state()

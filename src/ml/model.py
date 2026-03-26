@@ -1,10 +1,9 @@
-"""Machine learning model loading and prediction with caching."""
+"""Machine learning model loading and prediction."""
 
 import logging
 from pathlib import Path
 
 import numpy as np
-import streamlit as st
 from tensorflow.keras.models import Model, load_model
 
 logger = logging.getLogger("streamlit_nba")
@@ -19,12 +18,8 @@ class ModelLoadError(Exception):
     pass
 
 
-@st.cache_resource
 def get_winner_model(model_path: str | Path = DEFAULT_MODEL_PATH) -> Model:
-    """Load and cache the winner prediction model.
-
-    Uses Streamlit's cache_resource to ensure model is only loaded once
-    per session, improving performance significantly.
+    """Load the winner prediction model.
 
     Args:
         model_path: Path to the Keras model file

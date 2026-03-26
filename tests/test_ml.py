@@ -124,7 +124,7 @@ class TestPredictWinner:
 
 
 class TestGetWinnerModel:
-    """Tests for get_winner_model caching."""
+    """Tests for get_winner_model loading."""
 
     @patch("src.ml.model.load_model")
     @patch("src.ml.model.Path")
@@ -133,9 +133,6 @@ class TestGetWinnerModel:
     ) -> None:
         """Test that missing model file raises ModelLoadError."""
         from src.ml.model import get_winner_model
-
-        # Clear the cache to ensure fresh test
-        get_winner_model.clear()
 
         mock_path_instance = MagicMock()
         mock_path_instance.exists.return_value = False
