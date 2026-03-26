@@ -9,7 +9,7 @@ from src.config import DIFFICULTY_PRESETS, PLAYER_COLUMNS, configure_page
 from src.database.connection import (
     DatabaseConnectionError,
     QueryExecutionError,
-    get_connection,
+    load_data,
 )
 from src.database.queries import get_players_by_full_names, search_player_by_name
 from src.state.session import init_session_state
@@ -19,6 +19,11 @@ from src.validation.inputs import validate_search_term
 logger = logging.getLogger("streamlit_nba")
 
 configure_page()
+
+
+@st.cache_data
+def _load_nba_data() -> pd.DataFrame:
+    return load_data()
 
 # Initialize session state before any access
 init_session_state()
@@ -52,16 +57,16 @@ def find_player(search_term: str) -> list[str]:
         return []
 
     try:
-        with get_connection() as conn:
-            results = search_player_by_name(conn, validated_term)
-            return [player[0] for player in results]
+        data = _load_nba_data()
+        results = search_player_by_name(data, validated_term)
+        return [player[0] for player in results]
     except DatabaseConnectionError as e:
         st.error("Could not connect to database. Please try again later.")
-        logger.error(f"Database connection error: {e}")
+        logger.error("Database connection error: %s", e)
         return []
     except QueryExecutionError as e:
         st.error("Error searching for players. Please try again.")
-        logger.error(f"Query error: {e}")
+        logger.error("Query error: %s", e)
         return []
 
 
@@ -76,20 +81,20 @@ def find_home_team() -> pd.DataFrame:
         return pd.DataFrame(columns=PLAYER_COLUMNS)
 
     try:
-        with get_connection() as conn:
-            # Single batch query instead of N+1 queries
-            logger.info(f"Loading data for team: {team_names}")
-            df = get_players_by_full_names(conn, team_names)
-            logger.info(f"Retrieved {len(df)} players")
-            st.session_state.home_team_df = df
-            return df
+        data = _load_nba_data()
+        # Single batch query instead of N+1 queries
+        logger.info("Loading data for team: %s", team_names)
+        df = get_players_by_full_names(data, team_names)
+        logger.info("Retrieved %d players", len(df))
+        st.session_state.home_team_df = df
+        return df
     except DatabaseConnectionError as e:
         st.error("Could not connect to database. Please try again later.")
-        logger.error(f"Database connection error: {e}")
+        logger.error("Database connection error: %s", e)
         return pd.DataFrame(columns=PLAYER_COLUMNS)
     except QueryExecutionError as e:
         st.error("Error loading team data. Please try again.")
-        logger.error(f"Query error: {e}")
+        logger.error("Query error: %s", e)
         return pd.DataFrame(columns=PLAYER_COLUMNS)
 
 

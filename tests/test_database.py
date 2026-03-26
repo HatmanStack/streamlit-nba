@@ -1,15 +1,59 @@
 """Tests for database module using local pandas data."""
 
+from unittest.mock import patch
+
 import pandas as pd
 import pytest
 
 from src.config import PLAYER_COLUMNS
-from src.database.connection import QueryExecutionError
+from src.database.connection import (
+    DatabaseConnectionError,
+    QueryExecutionError,
+    get_data,
+    load_data,
+)
 from src.database.queries import (
     get_away_team_by_stats,
     get_players_by_full_names,
     search_player_by_name,
 )
+
+
+class TestLoadData:
+    """Tests for load_data and get_data functions."""
+
+    def test_load_data_returns_dataframe(self) -> None:
+        """Test that load_data returns a DataFrame with uppercase columns."""
+        df = load_data()
+        assert isinstance(df, pd.DataFrame)
+        assert not df.empty
+        # All columns should be uppercase
+        for col in df.columns:
+            assert col == col.upper()
+
+    def test_get_data_returns_dataframe(self) -> None:
+        """Test that get_data returns a DataFrame."""
+        df = get_data()
+        assert isinstance(df, pd.DataFrame)
+        assert not df.empty
+
+    @patch("src.database.connection.CSV_PATH")
+    def test_load_data_missing_file_raises_error(self, mock_path) -> None:  # type: ignore[no-untyped-def]
+        """Test that missing CSV raises DatabaseConnectionError."""
+        mock_path.exists.return_value = False
+        with pytest.raises(DatabaseConnectionError, match="not found"):
+            load_data()
+
+    @patch("src.database.connection.pd.read_csv")
+    @patch("src.database.connection.CSV_PATH")
+    def test_load_data_parser_error_raises_connection_error(
+        self, mock_path, mock_read_csv  # type: ignore[no-untyped-def]
+    ) -> None:
+        """Test that CSV parse errors raise DatabaseConnectionError."""
+        mock_path.exists.return_value = True
+        mock_read_csv.side_effect = pd.errors.ParserError("bad csv")
+        with pytest.raises(DatabaseConnectionError):
+            load_data()
 
 
 class TestSearchPlayerByName:

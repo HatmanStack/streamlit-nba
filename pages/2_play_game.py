@@ -19,7 +19,7 @@ from src.config import (
 from src.database.connection import (
     DatabaseConnectionError,
     QueryExecutionError,
-    get_connection,
+    load_data,
 )
 from src.database.queries import get_away_team_by_stats
 from src.ml.model import ModelLoadError, analyze_team_stats, predict_winner
@@ -29,6 +29,11 @@ from src.utils.html import safe_heading
 logger = logging.getLogger("streamlit_nba")
 
 configure_page()
+
+
+@st.cache_data
+def _load_nba_data() -> pd.DataFrame:
+    return load_data()
 
 # Initialize session state BEFORE any access
 init_session_state()
@@ -48,22 +53,22 @@ def find_away_team(stat_thresholds: list[int]) -> pd.DataFrame:
         DataFrame with away team data, or empty DataFrame on error
     """
     try:
-        with get_connection() as conn:
-            return get_away_team_by_stats(
-                conn,
-                pts_threshold=stat_thresholds[0],
-                reb_threshold=stat_thresholds[1],
-                ast_threshold=stat_thresholds[2],
-                stl_threshold=stat_thresholds[3],
-                max_attempts=MAX_QUERY_ATTEMPTS,
-            )
+        data = _load_nba_data()
+        return get_away_team_by_stats(
+            data,
+            pts_threshold=stat_thresholds[0],
+            reb_threshold=stat_thresholds[1],
+            ast_threshold=stat_thresholds[2],
+            stl_threshold=stat_thresholds[3],
+            max_attempts=MAX_QUERY_ATTEMPTS,
+        )
     except DatabaseConnectionError as e:
         st.error("Could not connect to database. Please try again later.")
-        logger.error(f"Database connection error: {e}")
+        logger.error("Database connection error: %s", e)
         return pd.DataFrame()
     except QueryExecutionError as e:
         st.error("Could not generate away team. Please try again.")
-        logger.error(f"Query error: {e}")
+        logger.error("Query error: %s", e)
         return pd.DataFrame()
 
 
