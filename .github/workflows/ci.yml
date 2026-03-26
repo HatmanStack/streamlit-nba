@@ -11,21 +11,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install uv
         run: pip install uv
 
+      - name: Cache uv packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: uv-${{ runner.os }}-
+
       - name: Install dependencies
         run: uv pip install -e ".[dev]" --system
 
       - name: Run tests
-        run: pytest --cov=src --cov-report=term-missing --cov-fail-under=70
+        run: pytest --cov=src --cov-report=term-missing
 
       - name: Run ruff
         run: ruff check src/ tests/

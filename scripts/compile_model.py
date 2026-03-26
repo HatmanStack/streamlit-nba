@@ -95,7 +95,7 @@ def create_stats(roster: pd.DataFrame, schedule: pd.DataFrame) -> list[np.ndarra
 
     # Combine home and away stats for each game
     for i in range(len(home_stats)):
-        arr: list[float] = []
+        arr: list[str | float] = []
 
         for row in home_stats[i]:
             arr.extend(row[1:])  # Skip team name column

@@ -18,6 +18,8 @@ htmlcov/
 
 # Packaging
 *.egg-info/
+dist/
+build/
 
 # uv
 uv.lock

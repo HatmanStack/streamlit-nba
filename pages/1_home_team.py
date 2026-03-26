@@ -8,7 +8,6 @@ import streamlit as st
 from src.config import DIFFICULTY_PRESETS, PLAYER_COLUMNS, configure_page
 from src.database.connection import (
     DatabaseConnectionError,
-    QueryExecutionError,
     load_data,
 )
 from src.database.queries import get_players_by_full_names, search_player_by_name
@@ -64,12 +63,8 @@ def find_player(search_term: str) -> list[str]:
         results = search_player_by_name(data, validated_term)
         return [player[0] for player in results]
     except DatabaseConnectionError as e:
-        st.error("Could not connect to database. Please try again later.")
-        logger.error("Database connection error: %s", e)
-        return []
-    except QueryExecutionError as e:
-        st.error("Error searching for players. Please try again.")
-        logger.error("Query error: %s", e)
+        st.error("Could not load player data. Please try again later.")
+        logger.error("Data load error: %s", e)
         return []
 
 
@@ -92,12 +87,8 @@ def find_home_team() -> pd.DataFrame:
         st.session_state.home_team_df = df
         return df
     except DatabaseConnectionError as e:
-        st.error("Could not connect to database. Please try again later.")
-        logger.error("Database connection error: %s", e)
-        return pd.DataFrame(columns=PLAYER_COLUMNS)
-    except QueryExecutionError as e:
-        st.error("Error loading team data. Please try again.")
-        logger.error("Query error: %s", e)
+        st.error("Could not load player data. Please try again later.")
+        logger.error("Data load error: %s", e)
         return pd.DataFrame(columns=PLAYER_COLUMNS)
 
 
