@@ -1,0 +1,5 @@
+streamlit==1.53.1
+tensorflow==2.20.0
+numpy==2.4.2
+pandas==2.3.3
+pydantic==2.12.5
