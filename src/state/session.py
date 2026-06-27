@@ -66,4 +66,5 @@ def get_home_team_df() -> pd.DataFrame:
         logger.warning("Invalid home_team_df in session, using empty DataFrame")
         return pd.DataFrame()
 
-    return cast("pd.DataFrame", df)
+    # isinstance check above already narrows df to pd.DataFrame (cast would be redundant)
+    return df
