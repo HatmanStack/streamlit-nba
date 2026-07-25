@@ -83,6 +83,7 @@ select = [
 ignore = [
     "S101",   # assert used (ok in tests)
     "PLR0913", # too many arguments
+    "PLR0917", # too many positional arguments
     "SIM105", # prefer explicit try-except over contextlib.suppress
     "PLR2004", # magic numbers ok in game logic
     "S311",   # standard pseudo-random generators ok for game logic
